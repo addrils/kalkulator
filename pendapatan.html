@@ -396,11 +396,7 @@
     });
   });
 
-  // Set tanggal hari ini saat load
-  const today = new Date();
-  document.getElementById("income-date").valueAsDate = today;
-  document.getElementById("income-filter-harian").valueAsDate = today;
-  tampilkanPendapatan("harian");
+  // Tidak set tanggal otomatis saat pertama buka
   tampilkanPendapatan();
   cekDataTanggal();
 </script>
