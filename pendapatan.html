@@ -76,60 +76,101 @@
   <input type="date" id="income-date" oninput="cekDataTanggal()" />
 
   <label for="income-kotor">Pendapatan Kotor:</label>
-  <input type="text" id="income-kotor" inputmode="numeric" pattern="[0-9]*" oninput="formatInputRupiah(this)" />
+  <input type="number" id="income-kotor" inputmode="numeric" pattern="[0-9]*" />
 
   <label for="income-pengeluaran">Pengeluaran:</label>
-  <input type="text" id="income-pengeluaran" inputmode="numeric" pattern="[0-9]*" oninput="formatInputRupiah(this)" />
+  <input type="number" id="income-pengeluaran" inputmode="numeric" pattern="[0-9]*" />
 
   <label for="income-nabung">Nabung:</label>
-  <input type="text" id="income-nabung" inputmode="numeric" pattern="[0-9]*" oninput="formatInputRupiah(this)" />
+  <input type="number" id="income-nabung" inputmode="numeric" pattern="[0-9]*" />
 
   <button onclick="simpanPendapatan()">Simpan</button>
   <button onclick="gantiPendapatan()" id="btn-ganti" style="display: none;">Ganti</button>
   <button onclick="hapusDataTanggal()" id="btn-hapus" class="danger" style="display: none;">Hapus Data Ini</button>
+  <button onclick="resetForm()">Reset</button>
 
   <div class="result" id="income-result"></div>
 </div>
 
+<!-- Histori Harian -->
+<div class="section">
+  <h3>Histori Harian</h3>
+  <label>Pilih Tanggal:</label>
+  <input type="date" id="income-filter-harian" onchange="tampilkanPendapatan('harian')" />
+  <div id="income-harian"></div>
+</div>
+
+<!-- Histori Mingguan -->
+<div class="section">
+  <h3>Histori Mingguan</h3>
+  <label>Pilih Tanggal dalam Minggu:</label>
+  <input type="date" id="income-filter-minggu" onchange="tampilkanPendapatan('mingguan')" />
+  <div id="income-mingguan"></div>
+</div>
+
+<!-- Histori Bulanan -->
+<div class="section">
+  <h3>Histori Bulanan</h3>
+  <label>Pilih Bulan:</label>
+  <input type="month" id="income-filter-bulan" onchange="tampilkanPendapatan('bulanan')" />
+  <div id="income-bulanan"></div>
+</div>
+
+<!-- Histori Keseluruhan -->
+<div class="section">
+  <h3>Histori Keseluruhan</h3>
+  <div id="income-semua"></div>
+</div>
+
+<!-- Backup & Restore -->
+<div class="section">
+  <h3>Backup & Restore Data</h3>
+  <button onclick="salinBackupPendapatan()">📋 Salin Backup</button>
+  <textarea id="backup-output" rows="5" placeholder="Data backup akan muncul di sini."></textarea>
+  <label>Tempel Data Backup:</label>
+  <textarea id="restore-input" rows="5" placeholder='{"2025-08-01":{"kotor":100000,"pengeluaran":20000,"nabung":10000,"bersih":70000}}'></textarea>
+  <button onclick="restoreBackupPendapatan()">🔄 Restore Backup</button>
+</div>
+
+<!-- Hapus Semua -->
+<div class="section">
+  <h3>Hapus Semua Data</h3>
+  <button class="danger" onclick="hapusSemuaPendapatan()">🗑 Hapus Semua Data</button>
+</div>
+
 <script>
-  function formatInputRupiah(el) {
-    let angka = el.value.replace(/\D/g, "");
-    el.value = angka.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  }
-
-  function getAngkaDariInput(id) {
-    return +document.getElementById(id).value.replace(/\./g, "") || 0;
-  }
-
-  function formatRupiah(angka) {
-    return "Rp " + angka.toLocaleString("id-ID");
-  }
-
-  function simpanData(key, date, data) {
+  const simpanData = (key, date, data) => {
     let db = JSON.parse(localStorage.getItem(key)) || {};
     db[date] = data;
     localStorage.setItem(key, JSON.stringify(db));
+  };
+
+  const ambilData = (key) => JSON.parse(localStorage.getItem(key)) || {};
+
+  function formatRupiah(angka) {
+    return `Rp ${angka.toLocaleString("id-ID")}`;
   }
 
-  function ambilData(key) {
-    return JSON.parse(localStorage.getItem(key)) || {};
+  function resetForm() {
+    document.getElementById("income-kotor").value = "";
+    document.getElementById("income-pengeluaran").value = "";
+    document.getElementById("income-nabung").value = "";
+    document.getElementById("income-result").innerText = "";
   }
 
   function simpanPendapatan() {
     const date = document.getElementById("income-date").value;
     if (!date) return alert("Tanggal harus diisi!");
 
-    const kotor = getAngkaDariInput("income-kotor");
-    const pengeluaran = getAngkaDariInput("income-pengeluaran");
-    const nabung = getAngkaDariInput("income-nabung");
+    const kotor = +document.getElementById("income-kotor").value || 0;
+    const pengeluaran = +document.getElementById("income-pengeluaran").value || 0;
+    const nabung = +document.getElementById("income-nabung").value || 0;
 
-    if (kotor < 0 || pengeluaran < 0 || nabung < 0) {
-      return alert("Nilai tidak boleh negatif!");
-    }
+    if (kotor < 0 || pengeluaran < 0 || nabung < 0) return alert("Nilai tidak boleh negatif!");
 
     const bersih = kotor - pengeluaran - nabung;
-
     let dataLama = ambilData("pendapatan")[date];
+
     if (dataLama && !confirm("Data untuk tanggal ini sudah ada. Tambahkan ke data lama?")) return;
 
     if (dataLama) {
@@ -144,30 +185,57 @@
     simpanData("pendapatan", date, dataLama);
     document.getElementById("income-result").innerText = `Pendapatan Bersih: ${formatRupiah(dataLama.bersih)}`;
     alert("Data berhasil disimpan!");
+    document.getElementById("income-filter-harian").value = date;
+    tampilkanPendapatan("harian");
+    tampilkanPendapatan("mingguan");
+    tampilkanPendapatan("bulanan");
+    tampilkanPendapatan();
     cekDataTanggal();
+    resetForm();
   }
 
   function gantiPendapatan() {
     const date = document.getElementById("income-date").value;
     if (!date) return alert("Tanggal harus diisi!");
 
-    const kotor = getAngkaDariInput("income-kotor");
-    const pengeluaran = getAngkaDariInput("income-pengeluaran");
-    const nabung = getAngkaDariInput("income-nabung");
+    const kotor = +document.getElementById("income-kotor").value || 0;
+    const pengeluaran = +document.getElementById("income-pengeluaran").value || 0;
+    const nabung = +document.getElementById("income-nabung").value || 0;
 
-    if (kotor < 0 || pengeluaran < 0 || nabung < 0) {
-      return alert("Nilai tidak boleh negatif!");
-    }
-
+    if (kotor < 0 || pengeluaran < 0 || nabung < 0) return alert("Nilai tidak boleh negatif!");
     if (!confirm(`Yakin ingin mengganti data untuk tanggal ${date}?`)) return;
 
     const bersih = kotor - pengeluaran - nabung;
-    const dataBaru = { kotor, pengeluaran, nabung, bersih };
-    simpanData("pendapatan", date, dataBaru);
+    simpanData("pendapatan", date, { kotor, pengeluaran, nabung, bersih });
 
     alert("Data berhasil diganti!");
     document.getElementById("income-result").innerText = `Pendapatan Bersih: ${formatRupiah(bersih)}`;
+    document.getElementById("income-filter-harian").value = date;
+    tampilkanPendapatan("harian");
+    tampilkanPendapatan("mingguan");
+    tampilkanPendapatan("bulanan");
+    tampilkanPendapatan();
     cekDataTanggal();
+    resetForm();
+  }
+
+  function hapusDataTanggal() {
+    const date = document.getElementById("income-date").value;
+    const data = ambilData("pendapatan");
+    if (!data[date]) return alert("Tidak ada data untuk tanggal ini.");
+
+    if (confirm(`Yakin ingin menghapus data untuk tanggal ${date}?`)) {
+      delete data[date];
+      localStorage.setItem("pendapatan", JSON.stringify(data));
+      alert("Data berhasil dihapus.");
+      document.getElementById("income-result").innerText = "";
+      tampilkanPendapatan("harian");
+      tampilkanPendapatan("mingguan");
+      tampilkanPendapatan("bulanan");
+      tampilkanPendapatan();
+      cekDataTanggal();
+      resetForm();
+    }
   }
 
   function cekDataTanggal() {
@@ -176,27 +244,152 @@
     const tombolGanti = document.getElementById("btn-ganti");
     const tombolHapus = document.getElementById("btn-hapus");
 
-    if (data[date]) {
-      tombolGanti.style.display = "inline-block";
-      tombolHapus.style.display = "inline-block";
-      document.getElementById("income-kotor").value = formatAngkaInput(data[date].kotor);
-      document.getElementById("income-pengeluaran").value = formatAngkaInput(data[date].pengeluaran);
-      document.getElementById("income-nabung").value = formatAngkaInput(data[date].nabung);
-    } else {
-      tombolGanti.style.display = "none";
-      tombolHapus.style.display = "none";
-      document.getElementById("income-kotor").value = "";
-      document.getElementById("income-pengeluaran").value = "";
-      document.getElementById("income-nabung").value = "";
+    tombolGanti.style.display = data[date] ? "inline-block" : "none";
+    tombolHapus.style.display = data[date] ? "inline-block" : "none";
+  }
+
+  function tampilkanPendapatan(filter = null) {
+    const data = ambilData("pendapatan");
+    const harianDiv = document.getElementById("income-harian");
+    const mingguanDiv = document.getElementById("income-mingguan");
+    const bulananDiv = document.getElementById("income-bulanan");
+    const semuaDiv = document.getElementById("income-semua");
+
+    if (filter === "harian") {
+      const tglInput = document.getElementById("income-filter-harian").value;
+      if (!tglInput || !data[tglInput]) {
+        harianDiv.innerHTML = "<p>Belum ada data untuk tanggal ini.</p>";
+        return;
+      }
+      const d = data[tglInput];
+      const formatTgl = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(tglInput));
+      harianDiv.innerHTML = `
+        <table>
+          <tr><th colspan="2">${formatTgl}</th></tr>
+          <tr><td>Kotor</td><td>${formatRupiah(d.kotor)}</td></tr>
+          <tr><td>Pengeluaran</td><td>${formatRupiah(d.pengeluaran)}</td></tr>
+          <tr><td>Nabung</td><td>${formatRupiah(d.nabung)}</td></tr>
+          <tr><td>Bersih</td><td><b style="color:green;">${formatRupiah(d.bersih)}</b></td></tr>
+        </table>`;
+    }
+
+    if (filter === "mingguan") {
+      const tgl = document.getElementById("income-filter-minggu").value;
+      if (!tgl) return mingguanDiv.innerHTML = "<p>Silakan pilih tanggal.</p>";
+      const { awal, akhir } = getMingguRange(tgl);
+      let total = { kotor: 0, pengeluaran: 0, nabung: 0, bersih: 0 };
+      for (const t in data) {
+        if (t >= awal && t <= akhir) {
+          const d = data[t];
+          total.kotor += d.kotor;
+          total.pengeluaran += d.pengeluaran;
+          total.nabung += d.nabung;
+          total.bersih += d.bersih;
+        }
+      }
+      mingguanDiv.innerHTML = `
+        <p>Periode: ${awal} – ${akhir}</p>
+        <table>
+          <tr><th>Kotor</th><th>Pengeluaran</th><th>Nabung</th><th>Bersih</th></tr>
+          <tr>
+            <td>${formatRupiah(total.kotor)}</td>
+            <td>${formatRupiah(total.pengeluaran)}</td>
+            <td>${formatRupiah(total.nabung)}</td>
+            <td><b style="color:green;">${formatRupiah(total.bersih)}</b></td>
+          </tr>
+        </table>`;
+    }
+
+    if (filter === "bulanan") {
+      const bulan = document.getElementById("income-filter-bulan").value;
+      if (!bulan) {
+        bulananDiv.innerHTML = "<p>Silakan pilih bulan.</p>";
+        return;
+      }
+      let total = { kotor: 0, pengeluaran: 0, nabung: 0, bersih: 0 };
+      for (const t in data) {
+        if (t.startsWith(bulan)) {
+          const d = data[t];
+          total.kotor += d.kotor;
+          total.pengeluaran += d.pengeluaran;
+          total.nabung += d.nabung;
+          total.bersih += d.bersih;
+        }
+      }
+      bulananDiv.innerHTML = `
+        <table>
+          <tr><th>Kotor</th><th>Pengeluaran</th><th>Nabung</th><th>Bersih</th></tr>
+          <tr>
+            <td>${formatRupiah(total.kotor)}</td>
+            <td>${formatRupiah(total.pengeluaran)}</td>
+            <td>${formatRupiah(total.nabung)}</td>
+            <td><b style="color:green;">${formatRupiah(total.bersih)}</b></td>
+          </tr>
+        </table>`;
+    }
+
+    let total = { kotor: 0, pengeluaran: 0, nabung: 0, bersih: 0 };
+    Object.keys(data).sort().forEach(t => {
+      const d = data[t];
+      total.kotor += d.kotor;
+      total.pengeluaran += d.pengeluaran;
+      total.nabung += d.nabung;
+      total.bersih += d.bersih;
+    });
+    semuaDiv.innerHTML = `
+      <table>
+        <tr><th>Kotor</th><th>Pengeluaran</th><th>Nabung</th><th>Bersih</th></tr>
+        <tr>
+          <td>${formatRupiah(total.kotor)}</td>
+          <td>${formatRupiah(total.pengeluaran)}</td>
+          <td>${formatRupiah(total.nabung)}</td>
+          <td><b style="color:green;">${formatRupiah(total.bersih)}</b></td>
+        </tr>
+      </table>`;
+  }
+
+  function getMingguRange(tanggal) {
+    const d = new Date(tanggal);
+    const day = d.getDay();
+    const senin = new Date(d);
+    senin.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    const minggu = new Date(senin);
+    minggu.setDate(senin.getDate() + 6);
+    return {
+      awal: senin.toISOString().slice(0, 10),
+      akhir: minggu.toISOString().slice(0, 10)
+    };
+  }
+
+  function salinBackupPendapatan() {
+    const data = localStorage.getItem("pendapatan") || "{}";
+    navigator.clipboard.writeText(data).then(() => alert("Backup disalin!"));
+    document.getElementById("backup-output").value = data;
+  }
+
+  function restoreBackupPendapatan() {
+    try {
+      const input = document.getElementById("restore-input").value;
+      const parsed = JSON.parse(input);
+      localStorage.setItem("pendapatan", JSON.stringify(parsed));
+      alert("Data berhasil direstore!");
+      tampilkanPendapatan();
+    } catch {
+      alert("Format backup tidak valid!");
     }
   }
 
-  function formatAngkaInput(nilai) {
-    return nilai.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  function hapusSemuaPendapatan() {
+    if (confirm("Yakin ingin menghapus semua data pendapatan?")) {
+      localStorage.removeItem("pendapatan");
+      tampilkanPendapatan();
+    }
   }
 
-  // Inisialisasi awal
   document.getElementById("income-date").valueAsDate = new Date();
+  document.getElementById("income-filter-harian").valueAsDate = new Date();
+  tampilkanPendapatan("harian");
+  tampilkanPendapatan();
   cekDataTanggal();
 </script>
 
