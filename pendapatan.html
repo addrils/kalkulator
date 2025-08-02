@@ -76,13 +76,13 @@
   <input type="date" id="income-date" oninput="cekDataTanggal()" />
 
   <label for="income-kotor">Pendapatan Kotor:</label>
-  <input type="number" id="income-kotor" inputmode="numeric" pattern="[0-9]*" />
+  <input type="text" id="income-kotor" inputmode="numeric" data-raw="0" />
 
   <label for="income-pengeluaran">Pengeluaran:</label>
-  <input type="number" id="income-pengeluaran" inputmode="numeric" pattern="[0-9]*" />
+  <input type="text" id="income-pengeluaran" inputmode="numeric" data-raw="0" />
 
   <label for="income-nabung">Nabung:</label>
-  <input type="number" id="income-nabung" inputmode="numeric" pattern="[0-9]*" />
+  <input type="text" id="income-nabung" inputmode="numeric" data-raw="0" />
 
   <button onclick="simpanPendapatan()">Simpan</button>
   <button onclick="gantiPendapatan()" id="btn-ganti" style="display: none;">Ganti</button>
@@ -92,7 +92,6 @@
   <div class="result" id="income-result"></div>
 </div>
 
-<!-- Histori Harian -->
 <div class="section">
   <h3>Histori Harian</h3>
   <label>Pilih Tanggal:</label>
@@ -100,7 +99,6 @@
   <div id="income-harian"></div>
 </div>
 
-<!-- Histori Mingguan -->
 <div class="section">
   <h3>Histori Mingguan</h3>
   <label>Pilih Tanggal dalam Minggu:</label>
@@ -108,7 +106,6 @@
   <div id="income-mingguan"></div>
 </div>
 
-<!-- Histori Bulanan -->
 <div class="section">
   <h3>Histori Bulanan</h3>
   <label>Pilih Bulan:</label>
@@ -116,13 +113,11 @@
   <div id="income-bulanan"></div>
 </div>
 
-<!-- Histori Keseluruhan -->
 <div class="section">
   <h3>Histori Keseluruhan</h3>
   <div id="income-semua"></div>
 </div>
 
-<!-- Backup & Restore -->
 <div class="section">
   <h3>Backup & Restore Data</h3>
   <button onclick="salinBackupPendapatan()">📋 Salin Backup</button>
@@ -132,7 +127,6 @@
   <button onclick="restoreBackupPendapatan()">🔄 Restore Backup</button>
 </div>
 
-<!-- Hapus Semua -->
 <div class="section">
   <h3>Hapus Semua Data</h3>
   <button class="danger" onclick="hapusSemuaPendapatan()">🗑 Hapus Semua Data</button>
@@ -152,19 +146,25 @@
   }
 
   function resetForm() {
-    document.getElementById("income-kotor").value = "";
-    document.getElementById("income-pengeluaran").value = "";
-    document.getElementById("income-nabung").value = "";
+    ["income-kotor", "income-pengeluaran", "income-nabung"].forEach(id => {
+      const el = document.getElementById(id);
+      el.value = "";
+      el.setAttribute("data-raw", 0);
+    });
     document.getElementById("income-result").innerText = "";
+  }
+
+  function getInputAngka(id) {
+    return +(document.getElementById(id).getAttribute("data-raw") || 0);
   }
 
   function simpanPendapatan() {
     const date = document.getElementById("income-date").value;
     if (!date) return alert("Tanggal harus diisi!");
 
-    const kotor = +document.getElementById("income-kotor").value || 0;
-    const pengeluaran = +document.getElementById("income-pengeluaran").value || 0;
-    const nabung = +document.getElementById("income-nabung").value || 0;
+    const kotor = getInputAngka("income-kotor");
+    const pengeluaran = getInputAngka("income-pengeluaran");
+    const nabung = getInputAngka("income-nabung");
 
     if (kotor < 0 || pengeluaran < 0 || nabung < 0) return alert("Nilai tidak boleh negatif!");
 
@@ -198,9 +198,9 @@
     const date = document.getElementById("income-date").value;
     if (!date) return alert("Tanggal harus diisi!");
 
-    const kotor = +document.getElementById("income-kotor").value || 0;
-    const pengeluaran = +document.getElementById("income-pengeluaran").value || 0;
-    const nabung = +document.getElementById("income-nabung").value || 0;
+    const kotor = getInputAngka("income-kotor");
+    const pengeluaran = getInputAngka("income-pengeluaran");
+    const nabung = getInputAngka("income-nabung");
 
     if (kotor < 0 || pengeluaran < 0 || nabung < 0) return alert("Nilai tidak boleh negatif!");
     if (!confirm(`Yakin ingin mengganti data untuk tanggal ${date}?`)) return;
@@ -386,8 +386,20 @@
     }
   }
 
-  document.getElementById("income-date").valueAsDate = new Date();
-  document.getElementById("income-filter-harian").valueAsDate = new Date();
+  // Format input angka dengan titik ribuan saat diketik
+  document.querySelectorAll("#income-kotor, #income-pengeluaran, #income-nabung").forEach((input) => {
+    input.addEventListener("input", () => {
+      let val = input.value.replace(/[^\d]/g, "");
+      val = val ? parseInt(val, 10) : 0;
+      input.setAttribute("data-raw", val);
+      input.value = val.toLocaleString("id-ID");
+    });
+  });
+
+  // Set tanggal hari ini saat load
+  const today = new Date();
+  document.getElementById("income-date").valueAsDate = today;
+  document.getElementById("income-filter-harian").valueAsDate = today;
   tampilkanPendapatan("harian");
   tampilkanPendapatan();
   cekDataTanggal();
