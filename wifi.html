@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fh_XxXxXx_5G Generator</title>
+  <style>
+    :root {
+      --primary: #007BFF;
+      --primary-dark: #005fcc;
+      --bg: linear-gradient(to right, #e3f2fd, #ffffff);
+      --card-bg: #ffffff;
+      --text: #2e2e2e;
+      --muted: #777;
+      --border: #d0d7e0;
+      --radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+    }
+
+    .container {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: var(--radius);
+      max-width: 500px;
+      margin: 60px auto;
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 24px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-sizing: border-box;
+      transition: border 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    button {
+      padding: 12px;
+      font-size: 1rem;
+      width: 100%;
+      margin-bottom: 12px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:disabled {
+      background-color: #f4f4f4;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      text-align: center;
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .alert-success {
+      background-color: #dbeeff;
+      color: #0056b3;
+    }
+
+    .alert-danger {
+      background-color: #fde2e2;
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>fh_XxXxXx_5G Generator</h1>
+
+    <input id="inputField" placeholder="Nama Wifi e.g. fh_XxXxXx_5G" type="text" />
+
+    <button class="btn-primary" id="generateBtn">Dapatkan Password</button>
+    <button class="btn-secondary" id="copyBtn" disabled>Salin</button>
+
+    <div class="alert" id="output">.</div>
+  </div>
+
+  <script>
+    const pairs = [
+      ['a', '5'], ['b', '4'], ['c', '3'], ['d', '2'],
+      ['e', '1'], ['f', '0'], ['6', '9'], ['7', '8']
+    ];
+    const map = {};
+    for (const [k, v] of pairs) {
+      map[k] = v;
+      map[v] = k;
+    }
+
+    function generateSSID(input) {
+      if (!input.startsWith('fh_')) return '';
+      const parts = input.split('_');
+      if (parts.length < 2) return '';
+      const middle = parts[1];
+      return 'wlan' + [...middle].map(c => map[c.toLowerCase()] ?? c).join('');
+    }
+
+    const inputField = document.getElementById('inputField');
+    const output = document.getElementById('output');
+    const generateBtn = document.getElementById('generateBtn');
+    const copyBtn = document.getElementById('copyBtn');
+
+    generateBtn.addEventListener('click', () => {
+      const val = inputField.value.trim();
+      const result = generateSSID(val);
+      output.textContent = result || 'Input Gagal';
+      output.className = 'alert ' + (result ? 'alert-success' : 'alert-danger');
+      copyBtn.disabled = !result;
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const text = output.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Tersalin!';
+        setTimeout(() => copyBtn.textContent = 'Salin', 1500);
+      } catch (err) {
+        copyBtn.textContent = 'Salin Gagal';
+        setTimeout(() => copyBtn.textContent = 'Salin', 1500);
+      }
+    });
+  </script>
+
+</body>
+</html>

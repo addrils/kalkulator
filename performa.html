@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kalkulator Performa</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f2f5;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      max-width: 800px;
+      margin-inline: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .time-input {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .time-input input {
+      width: 100%;
+    }
+    button {
+      width: 100%;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      font-size: 18px;
+      margin-top: 15px;
+      color: green;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <h2>Performa Order</h2>
+  <label for="po-selesai">Diselesaikan:</label>
+  <input type="number" id="po-selesai" />
+
+  <label for="po-batal">Dibatalkan:</label>
+  <input type="number" id="po-batal" />
+
+  <button onclick="hitungPerformaOrder()">Hitung Performa</button>
+  <div class="result" id="po-hasil"></div>
+</div>
+
+<div class="section">
+  <h2>Pembatalan Order</h2>
+  <label for="pb-selesai">Order Diselesaikan:</label>
+  <input type="number" id="pb-selesai" />
+
+  <label for="pb-performa">Performa (%):</label>
+  <input type="number" id="pb-performa" />
+
+  <button onclick="hitungPembatalan()">Hitung Pembatalan</button>
+  <div class="result" id="pb-hasil"></div>
+</div>
+
+<div class="section">
+  <h2>Performa Waktu Online</h2>
+  <label>Total Waktu Online:</label>
+  <div class="time-input">
+    <input type="number" id="pw-total-jam" placeholder="Jam" />
+    <input type="number" id="pw-total-menit" placeholder="Menit" />
+  </div>
+
+  <label>Target Waktu Online:</label>
+  <div class="time-input">
+    <input type="number" id="pw-target-jam" placeholder="Jam" />
+    <input type="number" id="pw-target-menit" placeholder="Menit" />
+  </div>
+
+  <button onclick="hitungPerformaWaktu()">Hitung Performa</button>
+  <div class="result" id="pw-hasil"></div>
+</div>
+
+<div class="section">
+  <h2>Waktu Online</h2>
+  <label>Target Waktu Online:</label>
+  <div class="time-input">
+    <input type="number" id="wo-target-jam" placeholder="Jam" />
+    <input type="number" id="wo-target-menit" placeholder="Menit" />
+  </div>
+
+  <label for="wo-performa">Performa (%):</label>
+  <input type="number" id="wo-performa" />
+
+  <button onclick="hitungWaktuOnline()">Hitung Total Waktu</button>
+  <div class="result" id="wo-hasil"></div>
+</div>
+
+<script>
+  function hitungPerformaOrder() {
+    const selesai = +document.getElementById("po-selesai").value || 0;
+    const batal = +document.getElementById("po-batal").value || 0;
+    const total = selesai + batal;
+    if (total === 0) return alert("Masukkan data yang valid!");
+    const performa = (selesai / total * 100).toFixed(2);
+    document.getElementById("po-hasil").innerText = `Performa: ${performa}%`;
+  }
+
+  function hitungPembatalan() {
+    const selesai = +document.getElementById("pb-selesai").value || 0;
+    const performa = +document.getElementById("pb-performa").value || 0;
+    if (performa <= 0 || performa > 100 || selesai === 0) return alert("Masukkan data yang valid!");
+    const batal = selesai * ((100 - performa) / performa);
+    document.getElementById("pb-hasil").innerText = `Order Dibatalkan: ${Math.round(batal)}`;
+  }
+
+  function hitungWaktuOnline() {
+    const jam = +document.getElementById("wo-target-jam").value || 0;
+    const menit = +document.getElementById("wo-target-menit").value || 0;
+    const target = jam * 60 + menit;
+
+    const performa = +document.getElementById("wo-performa").value || 0;
+    if (performa <= 0 || performa > 100 || target === 0) return alert("Masukkan data yang valid!");
+
+    const total = target * (performa / 100);
+    const waktu = konversiMenit(total);
+    document.getElementById("wo-hasil").innerText = `Total Waktu Online: ${waktu}`;
+  }
+
+  function hitungPerformaWaktu() {
+    const totalJam = +document.getElementById("pw-total-jam").value || 0;
+    const totalMenit = +document.getElementById("pw-total-menit").value || 0;
+    const total = totalJam * 60 + totalMenit;
+
+    const targetJam = +document.getElementById("pw-target-jam").value || 0;
+    const targetMenit = +document.getElementById("pw-target-menit").value || 0;
+    const target = targetJam * 60 + targetMenit;
+
+    if (target === 0) return alert("Target tidak boleh nol!");
+    const performa = (total / target * 100).toFixed(2);
+    const waktu = konversiMenit(total);
+    document.getElementById("pw-hasil").innerText = `Performa: ${performa}% (${waktu})`;
+  }
+
+  function konversiMenit(menit) {
+    const jam = Math.floor(menit / 60);
+    const sisa = Math.round(menit % 60);
+    return `${jam} jam ${sisa} menit`;
+  }
+</script>
+
+</body>
+</html>

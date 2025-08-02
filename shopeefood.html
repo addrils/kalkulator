@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kalkulator Performa ShopeeFood</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .section {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 30px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2, h3 { margin-top: 0; color: #2c3e50; }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+    input[type="number"],
+    input[type="date"],
+    input[type="month"],
+    textarea,
+    button {
+      padding: 10px;
+      margin-top: 5px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    textarea {
+      resize: vertical;
+    }
+    input:focus,
+    button:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 3px rgba(0, 123, 255, 0.5);
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .danger {
+      background-color: #dc3545;
+    }
+    .danger:hover {
+      background-color: #a71d2a;
+    }
+    .result {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+      color: #28a745;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f1f1f1;
+    }
+    @media (max-width: 600px) {
+      input, button, textarea {
+        font-size: 14px;
+      }
+      .result {
+        font-size: 16px;
+      }
+      th, td {
+        padding: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <h2>ShopeeFood</h2>
+  <label>Tanggal: <input type="date" id="shopee-date"></label>
+  <label>Penyelesaian Food: <input type="number" id="shopee-food"></label>
+  <label>Penyelesaian Paket: <input type="number" id="shopee-paket"></label>
+  <label>Dibatalkan: <input type="number" id="shopee-cancel"></label>
+  <button onclick="simpanShopee()">Hitung & Simpan</button>
+  <div class="result" id="shopee-result"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Harian</h3>
+  <label>Pilih Tanggal: <input type="date" id="shopee-filter-harian" onchange="tampilkanShopee('harian')"></label>
+  <div id="shopee-harian"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Mingguan</h3>
+  <label>Pilih Minggu (tanggal di minggu tersebut): <input type="date" id="shopee-filter-minggu" onchange="tampilkanShopee('mingguan')"></label>
+  <div id="shopee-mingguan"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Bulanan</h3>
+  <input type="month" id="shopee-filter-bulan" onchange="tampilkanShopee('bulanan')">
+  <div id="shopee-bulanan"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Keseluruhan</h3>
+  <div id="shopee-semua"></div>
+</div>
+
+<div class="section">
+  <h3>Backup & Restore Data</h3>
+  <button onclick="salinBackupShopee()">📋 Salin Backup</button>
+  <label>Data backup:</label>
+  <textarea id="backup-output" rows="5" placeholder="Klik 'Salin Backup' untuk menampilkan data backup."></textarea>
+
+  <label style="margin-top: 15px;">Tempel data backup di sini:</label>
+  <textarea id="restore-input" rows="5" placeholder='{"2025-08-01":{"food":2,"paket":1,"cancel":1,"performa":"75.00"}}'></textarea>
+  <button onclick="restoreBackupShopee()">🔄 Restore Backup</button>
+</div>
+
+<div class="section">
+  <h3>Hapus Data</h3>
+  <button class="danger" onclick="hapusSemuaShopee()">🗑 Hapus Semua Data ShopeeFood</button>
+</div>
+
+<script>
+  const formatter = new Intl.NumberFormat('id-ID');
+
+  const simpanData = (key, date, data) => {
+    let db = JSON.parse(localStorage.getItem(key)) || {};
+    db[date] = data;
+    localStorage.setItem(key, JSON.stringify(db));
+  };
+
+  const ambilData = (key) => JSON.parse(localStorage.getItem(key)) || {};
+
+  const hitungPerforma = (selesai, cancel) => {
+    const total = selesai + cancel;
+    return total ? ((selesai / total) * 100).toFixed(2) : "0.00";
+  };
+
+  function simpanShopee() {
+    const date = document.getElementById("shopee-date").value;
+    if (!date) return alert("Tanggal harus diisi!");
+
+    const food = +document.getElementById("shopee-food").value || 0;
+    const paket = +document.getElementById("shopee-paket").value || 0;
+    const cancel = +document.getElementById("shopee-cancel").value || 0;
+
+    if ([food, paket, cancel].some(n => n < 0)) {
+      return alert("Input tidak boleh negatif!");
+    }
+
+    const selesai = food + paket;
+    const performa = hitungPerforma(selesai, cancel);
+
+    const dataBaru = { food, paket, cancel, performa };
+
+    simpanData("shopee", date, dataBaru);
+    document.getElementById("shopee-result").innerText = `Performa: ${performa}% (tersimpan)`;
+
+    if (document.getElementById("shopee-filter-harian").value === date) tampilkanShopee("harian");
+    if (document.getElementById("shopee-filter-minggu").value) tampilkanShopee("mingguan");
+    if (document.getElementById("shopee-filter-bulan").value) tampilkanShopee("bulanan");
+    tampilkanShopee();
+  }
+
+  function tampilkanShopee(filter = null) {
+    const data = ambilData("shopee");
+    const sortedKeys = Object.keys(data).sort((a, b) => new Date(a) - new Date(b));
+
+    const harianDiv = document.getElementById("shopee-harian");
+    const bulananDiv = document.getElementById("shopee-bulanan");
+    const semuaDiv = document.getElementById("shopee-semua");
+    const mingguanDiv = document.getElementById("shopee-mingguan");
+
+    if (filter === "harian") {
+      const tgl = document.getElementById("shopee-filter-harian").value;
+      if (!tgl || !data[tgl]) {
+        harianDiv.innerHTML = `<p>Data untuk tanggal <strong>${tgl}</strong> tidak ditemukan.</p>`;
+        return;
+      }
+      const d = data[tgl];
+      harianDiv.innerHTML = `
+        <table>
+          <tr><th colspan="2">${tgl}</th></tr>
+          <tr><td>Food</td><td>${formatter.format(d.food)}</td></tr>
+          <tr><td>Paket</td><td>${formatter.format(d.paket)}</td></tr>
+          <tr><td>Dibatalkan</td><td>${formatter.format(d.cancel)}</td></tr>
+          <tr><td>Performa</td><td style="color:${d.performa < 80 ? 'red' : 'green'}">${d.performa}%</td></tr>
+        </table>
+      `;
+    }
+
+    if (filter === "bulanan") {
+      const bulan = document.getElementById("shopee-filter-bulan").value;
+      let total = { food: 0, paket: 0, cancel: 0 };
+      for (const tgl in data) {
+        if (tgl.startsWith(bulan)) {
+          const d = data[tgl];
+          total.food += d.food;
+          total.paket += d.paket;
+          total.cancel += d.cancel;
+        }
+      }
+      const selesai = total.food + total.paket;
+      const performa = hitungPerforma(selesai, total.cancel);
+      bulananDiv.innerHTML = `
+        <table>
+          <tr><th>Food</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+          <tr>
+            <td>${formatter.format(total.food)}</td>
+            <td>${formatter.format(total.paket)}</td>
+            <td>${formatter.format(total.cancel)}</td>
+            <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    if (filter === "mingguan") {
+      const inputDate = document.getElementById("shopee-filter-minggu").value;
+      if (!inputDate) {
+        mingguanDiv.innerHTML = "<p>Silakan pilih tanggal.</p>";
+        return;
+      }
+      const { awal, akhir } = getMingguRange(inputDate);
+      let total = { food: 0, paket: 0, cancel: 0 };
+      for (const tgl in data) {
+        if (tgl >= awal && tgl <= akhir) {
+          const d = data[tgl];
+          total.food += d.food;
+          total.paket += d.paket;
+          total.cancel += d.cancel;
+        }
+      }
+      const selesai = total.food + total.paket;
+      const performa = hitungPerforma(selesai, total.cancel);
+      mingguanDiv.innerHTML = `
+        <p>Periode: ${awal} – ${akhir}</p>
+        <table>
+          <tr><th>Food</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+          <tr>
+            <td>${formatter.format(total.food)}</td>
+            <td>${formatter.format(total.paket)}</td>
+            <td>${formatter.format(total.cancel)}</td>
+            <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    let total = { food: 0, paket: 0, cancel: 0 };
+    for (const tgl in data) {
+      const d = data[tgl];
+      total.food += d.food;
+      total.paket += d.paket;
+      total.cancel += d.cancel;
+    }
+    const selesai = total.food + total.paket;
+    const performa = hitungPerforma(selesai, total.cancel);
+    semuaDiv.innerHTML = `
+      <table>
+        <tr><th>Food</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+        <tr>
+          <td>${formatter.format(total.food)}</td>
+          <td>${formatter.format(total.paket)}</td>
+          <td>${formatter.format(total.cancel)}</td>
+          <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+        </tr>
+      </table>
+    `;
+  }
+
+  function getMingguRange(dateStr) {
+    const date = new Date(dateStr);
+    const day = date.getDay();
+    const diffToSenin = day === 0 ? -6 : 1 - day;
+    const senin = new Date(date);
+    senin.setDate(date.getDate() + diffToSenin);
+    const minggu = new Date(senin);
+    minggu.setDate(senin.getDate() + 6);
+    return {
+      awal: senin.toISOString().slice(0, 10),
+      akhir: minggu.toISOString().slice(0, 10)
+    };
+  }
+
+  function hapusSemuaShopee() {
+    if (confirm("Yakin ingin menghapus semua data ShopeeFood?")) {
+      localStorage.removeItem("shopee");
+      tampilkanShopee();
+    }
+  }
+
+  function salinBackupShopee() {
+    const data = localStorage.getItem("shopee") || "{}";
+    navigator.clipboard.writeText(data).then(() => {
+      alert("Backup berhasil disalin ke clipboard.");
+    });
+    document.getElementById("backup-output").value = data;
+  }
+
+  function restoreBackupShopee() {
+    const data = document.getElementById("restore-input").value;
+    try {
+      const parsed = JSON.parse(data);
+      localStorage.setItem("shopee", JSON.stringify(parsed));
+      alert("Data berhasil direstore!");
+      tampilkanShopee();
+    } catch {
+      alert("Format data tidak valid!");
+    }
+  }
+
+  tampilkanShopee();
+</script>
+
+</body>
+</html>

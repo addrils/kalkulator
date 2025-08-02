@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kalkulator Pendapatan</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f2f5;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      max-width: 800px;
+      margin-inline: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .danger {
+      background: #dc3545;
+    }
+    .danger:hover {
+      background: #a71d2a;
+    }
+    .result {
+      font-size: 18px;
+      margin-top: 15px;
+      color: green;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <h2>Pendapatan</h2>
+  <label for="income-date">Tanggal:</label>
+  <input type="date" id="income-date" oninput="cekDataTanggal()" />
+
+  <label for="income-kotor">Pendapatan Kotor:</label>
+  <input type="text" id="income-kotor" inputmode="numeric" pattern="[0-9]*" oninput="formatInputRupiah(this)" />
+
+  <label for="income-pengeluaran">Pengeluaran:</label>
+  <input type="text" id="income-pengeluaran" inputmode="numeric" pattern="[0-9]*" oninput="formatInputRupiah(this)" />
+
+  <label for="income-nabung">Nabung:</label>
+  <input type="text" id="income-nabung" inputmode="numeric" pattern="[0-9]*" oninput="formatInputRupiah(this)" />
+
+  <button onclick="simpanPendapatan()">Simpan</button>
+  <button onclick="gantiPendapatan()" id="btn-ganti" style="display: none;">Ganti</button>
+  <button onclick="hapusDataTanggal()" id="btn-hapus" class="danger" style="display: none;">Hapus Data Ini</button>
+
+  <div class="result" id="income-result"></div>
+</div>
+
+<script>
+  function formatInputRupiah(el) {
+    let angka = el.value.replace(/\D/g, "");
+    el.value = angka.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  function getAngkaDariInput(id) {
+    return +document.getElementById(id).value.replace(/\./g, "") || 0;
+  }
+
+  function formatRupiah(angka) {
+    return "Rp " + angka.toLocaleString("id-ID");
+  }
+
+  function simpanData(key, date, data) {
+    let db = JSON.parse(localStorage.getItem(key)) || {};
+    db[date] = data;
+    localStorage.setItem(key, JSON.stringify(db));
+  }
+
+  function ambilData(key) {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  }
+
+  function simpanPendapatan() {
+    const date = document.getElementById("income-date").value;
+    if (!date) return alert("Tanggal harus diisi!");
+
+    const kotor = getAngkaDariInput("income-kotor");
+    const pengeluaran = getAngkaDariInput("income-pengeluaran");
+    const nabung = getAngkaDariInput("income-nabung");
+
+    if (kotor < 0 || pengeluaran < 0 || nabung < 0) {
+      return alert("Nilai tidak boleh negatif!");
+    }
+
+    const bersih = kotor - pengeluaran - nabung;
+
+    let dataLama = ambilData("pendapatan")[date];
+    if (dataLama && !confirm("Data untuk tanggal ini sudah ada. Tambahkan ke data lama?")) return;
+
+    if (dataLama) {
+      dataLama.kotor += kotor;
+      dataLama.pengeluaran += pengeluaran;
+      dataLama.nabung += nabung;
+      dataLama.bersih += bersih;
+    } else {
+      dataLama = { kotor, pengeluaran, nabung, bersih };
+    }
+
+    simpanData("pendapatan", date, dataLama);
+    document.getElementById("income-result").innerText = `Pendapatan Bersih: ${formatRupiah(dataLama.bersih)}`;
+    alert("Data berhasil disimpan!");
+    cekDataTanggal();
+  }
+
+  function gantiPendapatan() {
+    const date = document.getElementById("income-date").value;
+    if (!date) return alert("Tanggal harus diisi!");
+
+    const kotor = getAngkaDariInput("income-kotor");
+    const pengeluaran = getAngkaDariInput("income-pengeluaran");
+    const nabung = getAngkaDariInput("income-nabung");
+
+    if (kotor < 0 || pengeluaran < 0 || nabung < 0) {
+      return alert("Nilai tidak boleh negatif!");
+    }
+
+    if (!confirm(`Yakin ingin mengganti data untuk tanggal ${date}?`)) return;
+
+    const bersih = kotor - pengeluaran - nabung;
+    const dataBaru = { kotor, pengeluaran, nabung, bersih };
+    simpanData("pendapatan", date, dataBaru);
+
+    alert("Data berhasil diganti!");
+    document.getElementById("income-result").innerText = `Pendapatan Bersih: ${formatRupiah(bersih)}`;
+    cekDataTanggal();
+  }
+
+  function cekDataTanggal() {
+    const date = document.getElementById("income-date").value;
+    const data = ambilData("pendapatan");
+    const tombolGanti = document.getElementById("btn-ganti");
+    const tombolHapus = document.getElementById("btn-hapus");
+
+    if (data[date]) {
+      tombolGanti.style.display = "inline-block";
+      tombolHapus.style.display = "inline-block";
+      document.getElementById("income-kotor").value = formatAngkaInput(data[date].kotor);
+      document.getElementById("income-pengeluaran").value = formatAngkaInput(data[date].pengeluaran);
+      document.getElementById("income-nabung").value = formatAngkaInput(data[date].nabung);
+    } else {
+      tombolGanti.style.display = "none";
+      tombolHapus.style.display = "none";
+      document.getElementById("income-kotor").value = "";
+      document.getElementById("income-pengeluaran").value = "";
+      document.getElementById("income-nabung").value = "";
+    }
+  }
+
+  function formatAngkaInput(nilai) {
+    return nilai.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  // Inisialisasi awal
+  document.getElementById("income-date").valueAsDate = new Date();
+  cekDataTanggal();
+</script>
+
+</body>
+</html>

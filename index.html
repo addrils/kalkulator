@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kategori Modern</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .kategori-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .kategori-card {
+      padding: 18px;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #007bff;
+      color: #ffffff;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .kategori-card:hover {
+      background-color: #0056b3;
+      transform: translateY(-4px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    .kategori-card.wifi {
+      font-size: 0.95rem;
+      padding: 14px 10px;
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 1.5rem;
+      }
+      .kategori-card {
+        font-size: 0.95rem;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Kategori</h2>
+
+  <div class="kategori-container">
+    <a href="performa.html" class="kategori-card">Kalkulator Performa</a>
+    <a href="pendapatan.html" class="kategori-card">Kalkulator Pendapatan</a>
+    <a href="grab.html" class="kategori-card">Kalkulator Grab</a>
+    <a href="shopeefood.html" class="kategori-card">Kalkulator ShopeeFood</a>
+    <a href="jgrp.html" class="kategori-card">Kalkulator JGRP</a>
+    <a href="wifi.html" class="kategori-card wifi">Wifi</a>
+  </div>
+
+</body>
+</html>
