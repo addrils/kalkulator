@@ -194,30 +194,40 @@
     resetForm();
   }
 
-  function gantiPendapatan() {
-    const date = document.getElementById("income-date").value;
-    if (!date) return alert("Tanggal harus diisi!");
+function gantiPendapatan() {
+  const date = document.getElementById("income-date").value;
+  if (!date) return alert("Tanggal harus diisi!");
 
-    const kotor = getInputAngka("income-kotor");
-    const pengeluaran = getInputAngka("income-pengeluaran");
-    const nabung = getInputAngka("income-nabung");
+  let data = ambilData("pendapatan")[date];
+  if (!data) return alert("Tidak ada data untuk tanggal ini.");
 
-    if (kotor < 0 || pengeluaran < 0 || nabung < 0) return alert("Nilai tidak boleh negatif!");
-    if (!confirm(`Yakin ingin mengganti data untuk tanggal ${date}?`)) return;
+  if (!confirm(`Yakin ingin mengganti sebagian data untuk tanggal ${date}?`)) return;
 
-    const bersih = kotor - pengeluaran - nabung;
-    simpanData("pendapatan", date, { kotor, pengeluaran, nabung, bersih });
+  // Ambil nilai baru, jika kosong tetap pakai nilai lama
+  const kotorInput = document.getElementById("income-kotor");
+  const pengeluaranInput = document.getElementById("income-pengeluaran");
+  const nabungInput = document.getElementById("income-nabung");
 
-    alert("Data berhasil diganti!");
-    document.getElementById("income-result").innerText = `Pendapatan Bersih: ${formatRupiah(bersih)}`;
-    document.getElementById("income-filter-harian").value = date;
-    tampilkanPendapatan("harian");
-    tampilkanPendapatan("mingguan");
-    tampilkanPendapatan("bulanan");
-    tampilkanPendapatan();
-    cekDataTanggal();
-    resetForm();
-  }
+  const kotor = kotorInput.value.trim() !== "" ? getInputAngka("income-kotor") : data.kotor;
+  const pengeluaran = pengeluaranInput.value.trim() !== "" ? getInputAngka("income-pengeluaran") : data.pengeluaran;
+  const nabung = nabungInput.value.trim() !== "" ? getInputAngka("income-nabung") : data.nabung;
+
+  if (kotor < 0 || pengeluaran < 0 || nabung < 0) return alert("Nilai tidak boleh negatif!");
+
+  const bersih = kotor - pengeluaran - nabung;
+
+  simpanData("pendapatan", date, { kotor, pengeluaran, nabung, bersih });
+
+  alert("Data berhasil diganti sebagian!");
+  document.getElementById("income-result").innerText = `Pendapatan Bersih: ${formatRupiah(bersih)}`;
+  document.getElementById("income-filter-harian").value = date;
+  tampilkanPendapatan("harian");
+  tampilkanPendapatan("mingguan");
+  tampilkanPendapatan("bulanan");
+  tampilkanPendapatan();
+  cekDataTanggal();
+  resetForm();
+}
 
   function hapusDataTanggal() {
     const date = document.getElementById("income-date").value;
