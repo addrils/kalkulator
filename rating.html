@@ -26,11 +26,11 @@
 </head>
 <body>
   <div class="card">
-    <h1>Kalkulator Rating Bintang</h1><div class="row"><label for="b5">Bintang 5</label><input id="b5" type="number" min="0" step="1" value="0"></div>
-<div class="row"><label for="b4">Bintang 4</label><input id="b4" type="number" min="0" step="1" value="0"></div>
-<div class="row"><label for="b3">Bintang 3</label><input id="b3" type="number" min="0" step="1" value="0"></div>
-<div class="row"><label for="b2">Bintang 2</label><input id="b2" type="number" min="0" step="1" value="0"></div>
-<div class="row"><label for="b1">Bintang 1</label><input id="b1" type="number" min="0" step="1" value="0"></div>
+    <h1>Kalkulator Rating Bintang</h1><div class="row"><label for="b5">Bintang 5</label><input id="b5" type="number" min="0" step="1" placeholder=""></div>
+<div class="row"><label for="b4">Bintang 4</label><input id="b4" type="number" min="0" step="1" placeholder=""></div>
+<div class="row"><label for="b3">Bintang 3</label><input id="b3" type="number" min="0" step="1" placeholder=""></div>
+<div class="row"><label for="b2">Bintang 2</label><input id="b2" type="number" min="0" step="1" placeholder=""></div>
+<div class="row"><label for="b1">Bintang 1</label><input id="b1" type="number" min="0" step="1" placeholder=""></div>
 
 <button id="calc">Hitung Rating</button>
 
@@ -88,10 +88,8 @@
       totalPointsEl.textContent = totalPoints;
       ratingEl.childNodes[0].textContent = rating.toFixed(2) + ' ';
 
-      // stars (rounded to nearest half-star display using ★ and ☆)
       ratingStarsEl.textContent = getStarString(rating);
 
-      // distribution
       [5,4,3,2,1].forEach(k=>{
         const c = counts[k];
         const pct = totalVotes === 0 ? 0 : Math.round((c/totalVotes)*100);
@@ -101,11 +99,11 @@
     }
 
     function getStarString(r){
-      const rounded = Math.round(r*2)/2; // e.g. 4.3 -> 4.5
+      const rounded = Math.round(r*2)/2;
       let s = '';
       for(let i=1;i<=5;i++){
         if(rounded >= i) s += '★';
-        else if(rounded >= i-0.5) s += '☆'; // half-star fallback shown as empty star (simple)
+        else if(rounded >= i-0.5) s += '☆';
         else s += '☆';
       }
       return s;
@@ -113,15 +111,12 @@
 
     document.getElementById('calc').addEventListener('click', compute);
 
-    // also compute live when user changes inputs
     inputs.forEach(inp=>inp.addEventListener('input', ()=>{
-      // prevent negative
-      if (inp.value === '') return; // allow empty until user finishes
-      if (Number(inp.value) < 0) inp.value = 0;
+      if (inp.value === '') return;
+      if (Number(inp.value) < 0) inp.value = '';
       compute();
     }));
 
-    // initial compute
     compute();
   </script></body>
 </html>
