@@ -1,0 +1,127 @@
+<!doctype html>
+
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalkulator Rating Bintang</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:0}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f5f7fb}
+    .card{background:#fff;padding:22px;border-radius:12px;box-shadow:0 6px 18px rgba(20,30,50,0.08);width:420px}
+    h1{font-size:18px;margin:0 0 12px}
+    .row{display:flex;align-items:center;gap:12px;margin:10px 0}
+    label{width:110px}
+    input[type=number]{flex:1;padding:8px;border-radius:8px;border:1px solid #d7dbe6}
+    .results{margin-top:16px;padding:12px;border-radius:8px;background:#f2f6ff}
+    .big{font-weight:700;font-size:20px}
+    .small{color:#444;font-size:13px}
+    .stars{display:inline-block;margin-left:6px;color:#ffb400}
+    button{margin-top:12px;width:100%;padding:10px;border-radius:10px;border:0;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
+    button:active{transform:translateY(1px)}
+    .bar{height:10px;background:#e6eefc;border-radius:8px;overflow:hidden}
+    .bar > i{display:block;height:100%;background:#67a0ff}
+    .meta{display:flex;justify-content:space-between;align-items:center}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Kalkulator Rating Bintang</h1><div class="row"><label for="b5">Bintang 5</label><input id="b5" type="number" min="0" step="1" value="0"></div>
+<div class="row"><label for="b4">Bintang 4</label><input id="b4" type="number" min="0" step="1" value="0"></div>
+<div class="row"><label for="b3">Bintang 3</label><input id="b3" type="number" min="0" step="1" value="0"></div>
+<div class="row"><label for="b2">Bintang 2</label><input id="b2" type="number" min="0" step="1" value="0"></div>
+<div class="row"><label for="b1">Bintang 1</label><input id="b1" type="number" min="0" step="1" value="0"></div>
+
+<button id="calc">Hitung Rating</button>
+
+<div class="results" id="results" aria-live="polite">
+  <div class="meta"><div class="small">Total vote</div><div id="totalVotes" class="big">0</div></div>
+  <div class="meta" style="margin-top:8px"><div class="small">Total bintang (jumlah poin)</div><div id="totalPoints" class="big">0</div></div>
+  <div class="meta" style="margin-top:8px"><div class="small">Rating (rata-rata)</div><div id="rating" class="big">0.00 <span class="stars" id="ratingStars">☆☆☆☆☆</span></div></div>
+
+  <div style="margin-top:12px">
+    <div class="small">Distribusi</div>
+    <div style="margin-top:8px">
+      <div class="meta"><div class="small">5 ★</div><div id="p5Text" class="small">0 (0%)</div></div>
+      <div class="bar" aria-hidden="true"><i id="p5Bar" style="width:0%"></i></div>
+
+      <div class="meta" style="margin-top:8px"><div class="small">4 ★</div><div id="p4Text" class="small">0 (0%)</div></div>
+      <div class="bar" aria-hidden="true"><i id="p4Bar" style="width:0%"></i></div>
+
+      <div class="meta" style="margin-top:8px"><div class="small">3 ★</div><div id="p3Text" class="small">0 (0%)</div></div>
+      <div class="bar" aria-hidden="true"><i id="p3Bar" style="width:0%"></i></div>
+
+      <div class="meta" style="margin-top:8px"><div class="small">2 ★</div><div id="p2Text" class="small">0 (0%)</div></div>
+      <div class="bar" aria-hidden="true"><i id="p2Bar" style="width:0%"></i></div>
+
+      <div class="meta" style="margin-top:8px"><div class="small">1 ★</div><div id="p1Text" class="small">0 (0%)</div></div>
+      <div class="bar" aria-hidden="true"><i id="p1Bar" style="width:0%"></i></div>
+    </div>
+  </div>
+</div>
+
+  </div>  <script>
+    const inputs = ['b5','b4','b3','b2','b1'].map(id=>document.getElementById(id));
+    const totalVotesEl = document.getElementById('totalVotes');
+    const totalPointsEl = document.getElementById('totalPoints');
+    const ratingEl = document.getElementById('rating');
+    const ratingStarsEl = document.getElementById('ratingStars');
+    const pText = {5:document.getElementById('p5Text'),4:document.getElementById('p4Text'),3:document.getElementById('p3Text'),2:document.getElementById('p2Text'),1:document.getElementById('p1Text')};
+    const pBar = {5:document.getElementById('p5Bar'),4:document.getElementById('p4Bar'),3:document.getElementById('p3Bar'),2:document.getElementById('p2Bar'),1:document.getElementById('p1Bar')};
+
+    function sanitize(n){n = Number(n); if (!Number.isFinite(n) || isNaN(n)) return 0; return Math.max(0, Math.floor(n)); }
+
+    function compute(){
+      const counts = {
+        5: sanitize(document.getElementById('b5').value),
+        4: sanitize(document.getElementById('b4').value),
+        3: sanitize(document.getElementById('b3').value),
+        2: sanitize(document.getElementById('b2').value),
+        1: sanitize(document.getElementById('b1').value),
+      };
+
+      const totalVotes = counts[5]+counts[4]+counts[3]+counts[2]+counts[1];
+      const totalPoints = counts[5]*5 + counts[4]*4 + counts[3]*3 + counts[2]*2 + counts[1]*1;
+      const rating = totalVotes === 0 ? 0 : (totalPoints/totalVotes);
+
+      totalVotesEl.textContent = totalVotes;
+      totalPointsEl.textContent = totalPoints;
+      ratingEl.childNodes[0].textContent = rating.toFixed(2) + ' ';
+
+      // stars (rounded to nearest half-star display using ★ and ☆)
+      ratingStarsEl.textContent = getStarString(rating);
+
+      // distribution
+      [5,4,3,2,1].forEach(k=>{
+        const c = counts[k];
+        const pct = totalVotes === 0 ? 0 : Math.round((c/totalVotes)*100);
+        pText[k].textContent = `${c} (${pct}%)`;
+        pBar[k].style.width = pct + '%';
+      });
+    }
+
+    function getStarString(r){
+      const rounded = Math.round(r*2)/2; // e.g. 4.3 -> 4.5
+      let s = '';
+      for(let i=1;i<=5;i++){
+        if(rounded >= i) s += '★';
+        else if(rounded >= i-0.5) s += '☆'; // half-star fallback shown as empty star (simple)
+        else s += '☆';
+      }
+      return s;
+    }
+
+    document.getElementById('calc').addEventListener('click', compute);
+
+    // also compute live when user changes inputs
+    inputs.forEach(inp=>inp.addEventListener('input', ()=>{
+      // prevent negative
+      if (inp.value === '') return; // allow empty until user finishes
+      if (Number(inp.value) < 0) inp.value = 0;
+      compute();
+    }));
+
+    // initial compute
+    compute();
+  </script></body>
+</html>
