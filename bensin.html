@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kalkulator Bensin</title>
+<style>
+  :root{
+    --brand:#1e88e5;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --bg:#f7fafc;
+    --card:#ffffff;
+    --line:#e5e7eb;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:var(--bg);
+  }
+  header{
+    background:var(--brand); color:#fff; padding:18px 20px; font-weight:700; letter-spacing:.5px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+  }
+  .wrap{max-width:980px; margin:24px auto; padding:0 14px;}
+  .grid{display:grid; gap:16px}
+  @media(min-width:768px){ .grid{grid-template-columns:1fr 1fr} }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; box-shadow:0 8px 20px rgba(16,24,40,.06);
+  }
+  h2{margin:.2rem 0 1rem; font-size:1.25rem}
+  label{display:block; font-weight:600; margin:10px 0 6px}
+  input[type="number"], input[type="text"], select{
+    width:100%; font:inherit; padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+    background:#fff; outline:none;
+  }
+  input:focus, select:focus{border-color:var(--brand); box-shadow:0 0 0 3px rgba(30,136,229,.15)}
+  .row{display:flex; gap:10px; align-items:center}
+  .sm{font-size:.92rem; color:var(--muted)}
+  .check{display:flex; gap:10px; align-items:center; margin-top:8px}
+  .btns{display:flex; gap:12px; margin-top:16px}
+  button{
+    border:0; padding:10px 16px; border-radius:12px; font-weight:700; cursor:pointer;
+  }
+  .primary{background:var(--brand); color:#fff}
+  .ghost{background:#fff; color:var(--ink); border:1px solid var(--line)}
+  table{width:100%; border-collapse:collapse; margin-top:8px; border-radius:12px; border:1px solid var(--line)}
+  th,td{padding:12px 10px; text-align:center}
+  thead{background:#f3f4f6}
+  tbody tr:nth-child(even){background:#fafafa}
+  .right{text-align:right}
+  .footer-note{margin-top:12px; color:var(--muted); font-size:.9rem}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div style="font-size:1.25rem">KALKULATOR BENSIN</div>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <section class="card">
+      <h2>Masukkan jarak tempuh</h2>
+      <div class="row">
+        <input id="distance" type="number" min="0" step="0.1" placeholder="contoh: 100" />
+        <div class="sm">km</div>
+      </div>
+      <label class="check">
+        <input id="roundtrip" type="checkbox" /> termasuk perjalanan balik
+      </label>
+
+      <h2 style="margin-top:18px">Masukkan rata-rata konsumsi</h2>
+      <div class="row">
+        <input id="eff" type="number" min="0" step="0.1" placeholder="contoh: 50" />
+        <select id="effUnit">
+          <option value="kml" selected>km/ℓ</option>
+          <option value="l100">ℓ/100 km</option>
+        </select>
+      </div>
+
+      <h2 style="margin-top:18px">Masukkan harga bensin/solar</h2>
+      <div class="row">
+        <input id="price" type="text" placeholder="contoh: 10.000" />
+        <div class="sm">Rp/ℓ</div>
+      </div>
+
+      <div class="btns">
+        <button class="ghost" id="clearBtn">Hapus</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Konsumsi bahan bakar</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Jarak</th>
+            <th>Konsumsi (ℓ)</th>
+            <th class="right">Harga (Rp)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="rowDist">-</td>
+            <td id="rowLiters">-</td>
+            <td id="rowCost" class="right">-</td>
+          </tr>
+          <tr>
+            <td>1 km</td>
+            <td id="rowPerKmLiters">-</td>
+            <td id="rowPerKmCost" class="right">-</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer-note" id="note"></div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const distance = $("distance");
+  const roundtrip = $("roundtrip");
+  const eff = $("eff");
+  const effUnit = $("effUnit");
+  const price = $("price");
+
+  const rowDist = $("rowDist");
+  const rowLiters = $("rowLiters");
+  const rowCost = $("rowCost");
+  const rowPerKmLiters = $("rowPerKmLiters");
+  const rowPerKmCost = $("rowPerKmCost");
+  const note = $("note");
+
+  const nfID = new Intl.NumberFormat('id-ID');
+  const nfID2 = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function formatRibuan(n){ return nfID.format(n); }
+
+  function getHarga(){
+    let raw = price.value.replace(/\./g,"");
+    return parseInt(raw) || 0;
+  }
+
+  // format harga otomatis ribuan
+  price.addEventListener("input", ()=>{
+    let raw = price.value.replace(/\D/g,"");
+    if(raw==="") { price.value=""; compute(); return; }
+    price.value = formatRibuan(parseInt(raw));
+    compute();
+  });
+
+  function litersFor(distanceKm){
+    const val = parseFloat(eff.value||"0");
+    if(val<=0) return 0;
+    if(effUnit.value === "kml"){
+      return distanceKm / val;
+    }else{
+      return distanceKm * (val / 100);
+    }
+  }
+  function rupiah(n){ return nfID.format(Math.round(n)); }
+  function literFmt(n){ return nfID2.format(n); }
+
+  function compute(){
+    let d = parseFloat(distance.value||"0");
+    const vEff = parseFloat(eff.value||"0");
+    const p = getHarga();
+
+    if(!d || !vEff || !p){
+      rowDist.textContent = "-";
+      rowLiters.textContent = "-";
+      rowCost.textContent = "-";
+      rowPerKmLiters.textContent = "-";
+      rowPerKmCost.textContent = "-";
+      note.textContent = "";
+      return;
+    }
+
+    const totalDist = roundtrip.checked ? d*2 : d;
+    const L_total = litersFor(totalDist);
+    const L_perKm  = litersFor(1);
+
+    const costTotal = L_total * p;
+    const costPerKm = L_perKm * p;
+
+    rowDist.textContent = nfID.format(totalDist) + " km";
+    rowLiters.textContent = literFmt(L_total);
+    rowCost.textContent = rupiah(costTotal);
+
+    rowPerKmLiters.textContent = literFmt(L_perKm);
+    rowPerKmCost.textContent = rupiah(costPerKm);
+
+    const unitText = effUnit.value==="kml" ? "km/ℓ" : "ℓ/100 km";
+    note.textContent = `Perhitungan dengan konsumsi rata-rata ${nfID2.format(vEff)} ${unitText} dan harga ${rupiah(p)} per liter` + (roundtrip.checked ? " (termasuk pulang-pergi)." : ".");
+  }
+
+  function clearAll(){
+    distance.value = "";
+    roundtrip.checked = false;
+    eff.value = "";
+    effUnit.value = "kml";
+    price.value = "";
+    compute();
+  }
+
+  // event listener semua input → hitung realtime
+  [distance, roundtrip, eff, effUnit].forEach(el => el.addEventListener("input", compute));
+  $("clearBtn").addEventListener("click", clearAll);
+
+  compute(); // render awal kosong
+})();
+</script>
+</body>
+</html>
