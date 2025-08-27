@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kalkulator Performa Grab</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .section {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 30px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2, h3 { margin-top: 0; color: #2c3e50; }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+    input[type="number"],
+    input[type="date"],
+    input[type="month"],
+    textarea,
+    button {
+      padding: 10px;
+      margin-top: 5px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    textarea {
+      resize: vertical;
+    }
+    input:focus,
+    button:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 3px rgba(0, 123, 255, 0.5);
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .danger {
+      background-color: #dc3545;
+    }
+    .danger:hover {
+      background-color: #a71d2a;
+    }
+    .result {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+      color: #28a745;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f1f1f1;
+    }
+    @media (max-width: 600px) {
+      input, button, textarea {
+        font-size: 14px;
+      }
+      .result {
+        font-size: 16px;
+      }
+      th, td {
+        padding: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <h2>Grab</h2>
+  <label>Tanggal: <input type="date" id="grab-date"></label>
+  <label>Penyelesaian Food: <input type="number" id="grab-food"></label>
+  <label>Penyelesaian Mart: <input type="number" id="grab-mart"></label>
+  <label>Penyelesaian Paket: <input type="number" id="grab-paket"></label>
+  <label>Dibatalkan: <input type="number" id="grab-cancel"></label>
+  <button onclick="simpanGrab()">Hitung & Simpan</button>
+  <div class="result" id="grab-result"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Harian</h3>
+  <label>Pilih Tanggal: <input type="date" id="grab-filter-harian" onchange="tampilkanGrab('harian')"></label>
+  <div id="grab-harian"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Mingguan</h3>
+  <label>Pilih Minggu (tanggal di minggu tersebut): <input type="date" id="grab-filter-minggu" onchange="tampilkanGrab('mingguan')"></label>
+  <div id="grab-mingguan"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Bulanan</h3>
+  <input type="month" id="grab-filter-bulan" onchange="tampilkanGrab('bulanan')">
+  <div id="grab-bulanan"></div>
+</div>
+
+<div class="section">
+  <h3>Histori Keseluruhan</h3>
+  <div id="grab-semua"></div>
+</div>
+
+<div class="section">
+  <h3>Backup & Restore Data</h3>
+  <button onclick="salinBackupGrab()">📋 Salin Backup</button>
+  <label>Data backup:</label>
+  <textarea id="backup-output" rows="5" placeholder="Klik 'Salin Backup' untuk menampilkan data backup."></textarea>
+
+  <label style="margin-top: 15px;">Tempel data backup di sini:</label>
+  <textarea id="restore-input" rows="5" placeholder='{"2025-08-01":{"food":2,"mart":1,"paket":0,"cancel":1,"performa":"75.00"}}'></textarea>
+  <button onclick="restoreBackupGrab()">🔄 Restore Backup</button>
+</div>
+
+<div class="section">
+  <h3>Hapus Data</h3>
+  <button class="danger" onclick="hapusSemuaGrab()">🗑 Hapus Semua Data Grab</button>
+</div>
+
+<script>
+  const formatter = new Intl.NumberFormat('id-ID');
+
+  const simpanData = (key, date, data) => {
+    let db = JSON.parse(localStorage.getItem(key)) || {};
+    db[date] = data;
+    localStorage.setItem(key, JSON.stringify(db));
+  };
+
+  const ambilData = (key) => JSON.parse(localStorage.getItem(key)) || {};
+
+  const hitungPerforma = (selesai, cancel) => {
+    const total = selesai + cancel;
+    return total ? ((selesai / total) * 100).toFixed(2) : "0.00";
+  };
+
+  function simpanGrab() {
+    const date = document.getElementById("grab-date").value;
+    if (!date) return alert("Tanggal harus diisi!");
+
+    const food = +document.getElementById("grab-food").value || 0;
+    const mart = +document.getElementById("grab-mart").value || 0;
+    const paket = +document.getElementById("grab-paket").value || 0;
+    const cancel = +document.getElementById("grab-cancel").value || 0;
+
+    // Fitur 1: Validasi input tidak boleh negatif
+    if ([food, mart, paket, cancel].some(n => n < 0)) {
+      return alert("Input tidak boleh negatif!");
+    }
+
+    const selesai = food + mart + paket;
+    const performa = hitungPerforma(selesai, cancel);
+
+    const dataBaru = { food, mart, paket, cancel, performa };
+
+    simpanData("grab", date, dataBaru);
+
+    // Fitur 2: Notifikasi berhasil simpan
+    document.getElementById("grab-result").innerText = `Performa: ${performa}% (tersimpan)`;
+
+    if (document.getElementById("grab-filter-harian").value === date) tampilkanGrab("harian");
+    if (document.getElementById("grab-filter-minggu").value) tampilkanGrab("mingguan");
+    if (document.getElementById("grab-filter-bulan").value) tampilkanGrab("bulanan");
+    tampilkanGrab();
+  }
+
+  function tampilkanGrab(filter = null) {
+    const data = ambilData("grab");
+    const sortedKeys = Object.keys(data).sort((a, b) => new Date(a) - new Date(b));
+
+    const harianDiv = document.getElementById("grab-harian");
+    const bulananDiv = document.getElementById("grab-bulanan");
+    const semuaDiv = document.getElementById("grab-semua");
+    const mingguanDiv = document.getElementById("grab-mingguan");
+
+    if (filter === "harian") {
+      const tgl = document.getElementById("grab-filter-harian").value;
+      if (!tgl || !data[tgl]) {
+        // Fitur 3: Pesan data tidak ditemukan
+        harianDiv.innerHTML = `<p>Data untuk tanggal <strong>${tgl}</strong> tidak ditemukan.</p>`;
+        return;
+      }
+      const d = data[tgl];
+      harianDiv.innerHTML = `
+        <table>
+          <tr><th colspan="2">${tgl}</th></tr>
+          <tr><td>Food</td><td>${formatter.format(d.food)}</td></tr>
+          <tr><td>Mart</td><td>${formatter.format(d.mart)}</td></tr>
+          <tr><td>Paket</td><td>${formatter.format(d.paket)}</td></tr>
+          <tr><td>Dibatalkan</td><td>${formatter.format(d.cancel)}</td></tr>
+          <tr><td>Performa</td><td style="color:${d.performa < 80 ? 'red' : 'green'}">${d.performa}%</td></tr>
+        </table>
+      `;
+    }
+
+    if (filter === "bulanan") {
+      const bulan = document.getElementById("grab-filter-bulan").value;
+      let total = { food: 0, mart: 0, paket: 0, cancel: 0 };
+      for (const tgl in data) {
+        if (tgl.startsWith(bulan)) {
+          const d = data[tgl];
+          total.food += d.food;
+          total.mart += d.mart;
+          total.paket += d.paket;
+          total.cancel += d.cancel;
+        }
+      }
+      const selesai = total.food + total.mart + total.paket;
+      const performa = hitungPerforma(selesai, total.cancel);
+      bulananDiv.innerHTML = `
+        <table>
+          <tr><th>Food</th><th>Mart</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+          <tr>
+            <td>${formatter.format(total.food)}</td>
+            <td>${formatter.format(total.mart)}</td>
+            <td>${formatter.format(total.paket)}</td>
+            <td>${formatter.format(total.cancel)}</td>
+            <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    if (filter === "mingguan") {
+      const inputDate = document.getElementById("grab-filter-minggu").value;
+      if (!inputDate) {
+        mingguanDiv.innerHTML = "<p>Silakan pilih tanggal.</p>";
+        return;
+      }
+      const { awal, akhir } = getMingguRange(inputDate);
+      let total = { food: 0, mart: 0, paket: 0, cancel: 0 };
+      for (const tgl in data) {
+        if (tgl >= awal && tgl <= akhir) {
+          const d = data[tgl];
+          total.food += d.food;
+          total.mart += d.mart;
+          total.paket += d.paket;
+          total.cancel += d.cancel;
+        }
+      }
+      const selesai = total.food + total.mart + total.paket;
+      const performa = hitungPerforma(selesai, total.cancel);
+      mingguanDiv.innerHTML = `
+        <p>Periode: ${awal} – ${akhir}</p>
+        <table>
+          <tr><th>Food</th><th>Mart</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+          <tr>
+            <td>${formatter.format(total.food)}</td>
+            <td>${formatter.format(total.mart)}</td>
+            <td>${formatter.format(total.paket)}</td>
+            <td>${formatter.format(total.cancel)}</td>
+            <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    let total = { food: 0, mart: 0, paket: 0, cancel: 0 };
+    for (const tgl in data) {
+      const d = data[tgl];
+      total.food += d.food;
+      total.mart += d.mart;
+      total.paket += d.paket;
+      total.cancel += d.cancel;
+    }
+    const selesai = total.food + total.mart + total.paket;
+    const performa = hitungPerforma(selesai, total.cancel);
+    semuaDiv.innerHTML = `
+      <table>
+        <tr><th>Food</th><th>Mart</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+        <tr>
+          <td>${formatter.format(total.food)}</td>
+          <td>${formatter.format(total.mart)}</td>
+          <td>${formatter.format(total.paket)}</td>
+          <td>${formatter.format(total.cancel)}</td>
+          <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+        </tr>
+      </table>
+    `;
+  }
+
+  function getMingguRange(dateStr) {
+    const date = new Date(dateStr);
+    const day = date.getDay();
+    const diffToSenin = day === 0 ? -6 : 1 - day;
+    const senin = new Date(date);
+    senin.setDate(date.getDate() + diffToSenin);
+    const minggu = new Date(senin);
+    minggu.setDate(senin.getDate() + 6);
+    return {
+      awal: senin.toISOString().slice(0, 10),
+      akhir: minggu.toISOString().slice(0, 10)
+    };
+  }
+
+  function hapusSemuaGrab() {
+    if (confirm("Yakin ingin menghapus semua data Grab?")) {
+      localStorage.removeItem("grab");
+      tampilkanGrab();
+    }
+  }
+
+  function salinBackupGrab() {
+    const data = localStorage.getItem("grab") || "{}";
+    navigator.clipboard.writeText(data).then(() => {
+      alert("Backup berhasil disalin ke clipboard.");
+    });
+    document.getElementById("backup-output").value = data;
+  }
+
+  function restoreBackupGrab() {
+    const data = document.getElementById("restore-input").value;
+    try {
+      const parsed = JSON.parse(data);
+      localStorage.setItem("grab", JSON.stringify(parsed));
+      alert("Data berhasil direstore!");
+      tampilkanGrab();
+    } catch {
+      alert("Format data tidak valid!");
+    }
+  }
+
+  tampilkanGrab();
+</script>
+
+</body>
+</html>
