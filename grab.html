@@ -120,9 +120,9 @@
 </div>
 
 <div class="section">
-  <h3>Histori Mingguan</h3>
-  <label>Pilih Minggu (tanggal di minggu tersebut): <input type="date" id="grab-filter-minggu" onchange="tampilkanGrab('mingguan')"></label>
-  <div id="grab-mingguan"></div>
+  <h3>Histori Rolling Window (7 Hari)</h3>
+  <label>Pilih Tanggal Akhir: <input type="date" id="grab-filter-window" onchange="tampilkanGrab('window')"></label>
+  <div id="grab-window"></div>
 </div>
 
 <div class="section">
@@ -177,7 +177,6 @@
     const paket = +document.getElementById("grab-paket").value || 0;
     const cancel = +document.getElementById("grab-cancel").value || 0;
 
-    // Fitur 1: Validasi input tidak boleh negatif
     if ([food, mart, paket, cancel].some(n => n < 0)) {
       return alert("Input tidak boleh negatif!");
     }
@@ -189,11 +188,10 @@
 
     simpanData("grab", date, dataBaru);
 
-    // Fitur 2: Notifikasi berhasil simpan
     document.getElementById("grab-result").innerText = `Performa: ${performa}% (tersimpan)`;
 
     if (document.getElementById("grab-filter-harian").value === date) tampilkanGrab("harian");
-    if (document.getElementById("grab-filter-minggu").value) tampilkanGrab("mingguan");
+    if (document.getElementById("grab-filter-window").value) tampilkanGrab("window");
     if (document.getElementById("grab-filter-bulan").value) tampilkanGrab("bulanan");
     tampilkanGrab();
   }
@@ -205,12 +203,11 @@
     const harianDiv = document.getElementById("grab-harian");
     const bulananDiv = document.getElementById("grab-bulanan");
     const semuaDiv = document.getElementById("grab-semua");
-    const mingguanDiv = document.getElementById("grab-mingguan");
+    const windowDiv = document.getElementById("grab-window");
 
     if (filter === "harian") {
       const tgl = document.getElementById("grab-filter-harian").value;
       if (!tgl || !data[tgl]) {
-        // Fitur 3: Pesan data tidak ditemukan
         harianDiv.innerHTML = `<p>Data untuk tanggal <strong>${tgl}</strong> tidak ditemukan.</p>`;
         return;
       }
@@ -255,16 +252,20 @@
       `;
     }
 
-    if (filter === "mingguan") {
-      const inputDate = document.getElementById("grab-filter-minggu").value;
+    if (filter === "window") {
+      const inputDate = document.getElementById("grab-filter-window").value;
       if (!inputDate) {
-        mingguanDiv.innerHTML = "<p>Silakan pilih tanggal.</p>";
+        windowDiv.innerHTML = "<p>Silakan pilih tanggal akhir.</p>";
         return;
       }
-      const { awal, akhir } = getMingguRange(inputDate);
+      const end = new Date(inputDate);
+      const start = new Date(end);
+      start.setDate(end.getDate() - 6);
+
       let total = { food: 0, mart: 0, paket: 0, cancel: 0 };
       for (const tgl in data) {
-        if (tgl >= awal && tgl <= akhir) {
+        const cur = new Date(tgl);
+        if (cur >= start && cur <= end) {
           const d = data[tgl];
           total.food += d.food;
           total.mart += d.mart;
@@ -274,8 +275,8 @@
       }
       const selesai = total.food + total.mart + total.paket;
       const performa = hitungPerforma(selesai, total.cancel);
-      mingguanDiv.innerHTML = `
-        <p>Periode: ${awal} – ${akhir}</p>
+      windowDiv.innerHTML = `
+        <p>Periode: ${start.toISOString().slice(0,10)} – ${end.toISOString().slice(0,10)}</p>
         <table>
           <tr><th>Food</th><th>Mart</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
           <tr>
@@ -311,20 +312,6 @@
         </tr>
       </table>
     `;
-  }
-
-  function getMingguRange(dateStr) {
-    const date = new Date(dateStr);
-    const day = date.getDay();
-    const diffToSenin = day === 0 ? -6 : 1 - day;
-    const senin = new Date(date);
-    senin.setDate(date.getDate() + diffToSenin);
-    const minggu = new Date(senin);
-    minggu.setDate(senin.getDate() + 6);
-    return {
-      awal: senin.toISOString().slice(0, 10),
-      akhir: minggu.toISOString().slice(0, 10)
-    };
   }
 
   function hapusSemuaGrab() {
