@@ -126,6 +126,12 @@
 </div>
 
 <div class="section">
+  <h3>Histori Rolling Window (3 Hari)</h3>
+  <label>Pilih Tanggal Akhir: <input type="date" id="grab-filter-window-3" onchange="tampilkanGrab('window3')"></label>
+  <div id="grab-window-3"></div>
+</div>
+
+<div class="section">
   <h3>Histori Bulanan</h3>
   <input type="month" id="grab-filter-bulan" onchange="tampilkanGrab('bulanan')">
   <div id="grab-bulanan"></div>
@@ -192,6 +198,7 @@
 
     if (document.getElementById("grab-filter-harian").value === date) tampilkanGrab("harian");
     if (document.getElementById("grab-filter-window").value) tampilkanGrab("window");
+    if (document.getElementById("grab-filter-window-3").value) tampilkanGrab("window3");
     if (document.getElementById("grab-filter-bulan").value) tampilkanGrab("bulanan");
     tampilkanGrab();
   }
@@ -204,6 +211,7 @@
     const bulananDiv = document.getElementById("grab-bulanan");
     const semuaDiv = document.getElementById("grab-semua");
     const windowDiv = document.getElementById("grab-window");
+    const window3Div = document.getElementById("grab-window-3");
 
     if (filter === "harian") {
       const tgl = document.getElementById("grab-filter-harian").value;
@@ -276,6 +284,44 @@
       const selesai = total.food + total.mart + total.paket;
       const performa = hitungPerforma(selesai, total.cancel);
       windowDiv.innerHTML = `
+        <p>Periode: ${start.toISOString().slice(0,10)} – ${end.toISOString().slice(0,10)}</p>
+        <table>
+          <tr><th>Food</th><th>Mart</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+          <tr>
+            <td>${formatter.format(total.food)}</td>
+            <td>${formatter.format(total.mart)}</td>
+            <td>${formatter.format(total.paket)}</td>
+            <td>${formatter.format(total.cancel)}</td>
+            <td style="color:${performa < 80 ? 'red' : 'green'}">${performa}%</td>
+          </tr>
+        </table>
+      `;
+    }
+
+    if (filter === "window3") {
+      const inputDate = document.getElementById("grab-filter-window-3").value;
+      if (!inputDate) {
+        window3Div.innerHTML = "<p>Silakan pilih tanggal akhir.</p>";
+        return;
+      }
+      const end = new Date(inputDate);
+      const start = new Date(end);
+      start.setDate(end.getDate() - 2); // 3 hari
+
+      let total = { food: 0, mart: 0, paket: 0, cancel: 0 };
+      for (const tgl in data) {
+        const cur = new Date(tgl);
+        if (cur >= start && cur <= end) {
+          const d = data[tgl];
+          total.food += d.food;
+          total.mart += d.mart;
+          total.paket += d.paket;
+          total.cancel += d.cancel;
+        }
+      }
+      const selesai = total.food + total.mart + total.paket;
+      const performa = hitungPerforma(selesai, total.cancel);
+      window3Div.innerHTML = `
         <p>Periode: ${start.toISOString().slice(0,10)} – ${end.toISOString().slice(0,10)}</p>
         <table>
           <tr><th>Food</th><th>Mart</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
