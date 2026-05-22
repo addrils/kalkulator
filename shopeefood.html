@@ -20,45 +20,98 @@
       padding:10px; margin-top:5px; width:100%; border:1px solid #ccc; border-radius:6px; font-size:16px;
     }
     textarea { resize:vertical; }
-    input:focus, button:focus, textarea:focus { outline:none; border-color:#007bff; box-shadow:0 0 3px rgba(0,123,255,0.5);}
-    button { background-color:#007bff; color:white; cursor:pointer; transition:0.3s; }
+    input:focus, button:focus, textarea:focus {
+      outline:none;
+      border-color:#007bff;
+      box-shadow:0 0 3px rgba(0,123,255,0.5);
+    }
+    button {
+      background-color:#007bff;
+      color:white;
+      cursor:pointer;
+      transition:0.3s;
+    }
     button:hover { background-color:#0056b3; }
     .danger { background-color:#dc3545; }
     .danger:hover { background-color:#a71d2a; }
-    .result { margin-top:15px; font-weight:bold; font-size:18px; text-align:center; color:#28a745; }
-    table { width:100%; border-collapse:collapse; margin-top:15px; background-color:#fff; }
-    th,td { border:1px solid #dee2e6; padding:10px; text-align:center; }
+    .result {
+      margin-top:15px;
+      font-weight:bold;
+      font-size:18px;
+      text-align:center;
+      color:#28a745;
+    }
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:15px;
+      background-color:#fff;
+    }
+    th,td {
+      border:1px solid #dee2e6;
+      padding:10px;
+      text-align:center;
+    }
     th { background-color:#f1f1f1; }
-    @media(max-width:600px){ input,button,textarea{font-size:14px;} .result{font-size:16px;} th,td{padding:6px;} }
+
+    @media(max-width:600px){
+      input,button,textarea{font-size:14px;}
+      .result{font-size:16px;}
+      th,td{padding:6px;}
+    }
   </style>
 </head>
 <body>
 
 <div class="section">
   <h2>ShopeeFood</h2>
-  <label>Tanggal: <input type="date" id="shopee-date"></label>
-  <label>Penyelesaian Food: <input type="number" id="shopee-food"></label>
-  <label>Penyelesaian Paket: <input type="number" id="shopee-paket"></label>
-  <label>Dibatalkan: <input type="number" id="shopee-cancel"></label>
+
+  <label>Tanggal:
+    <input type="date" id="shopee-date">
+  </label>
+
+  <label>Penyelesaian Food:
+    <input type="number" id="shopee-food">
+  </label>
+
+  <label>Penyelesaian SPX:
+    <input type="number" id="shopee-paket">
+  </label>
+
+  <label>Dibatalkan Food:
+    <input type="number" id="shopee-cancel-food">
+  </label>
+
+  <label>Dibatalkan SPX:
+    <input type="number" id="shopee-cancel-spx">
+  </label>
+
   <button onclick="simpanShopee()">Hitung & Simpan</button>
+
   <div class="result" id="shopee-result"></div>
 </div>
 
 <div class="section">
   <h3>Histori Harian</h3>
-  <label>Pilih Tanggal: <input type="date" id="shopee-filter-harian" onchange="tampilkanShopee('harian')"></label>
+  <label>Pilih Tanggal:
+    <input type="date" id="shopee-filter-harian" onchange="tampilkanShopee('harian')">
+  </label>
   <div id="shopee-harian"></div>
 </div>
 
 <div class="section">
   <h3>Rolling Window 7 Hari</h3>
-  <label>Pilih Tanggal Akhir: <input type="date" id="shopee-filter-7" onchange="tampilkanShopee('window7')"></label>
+  <label>Pilih Tanggal Akhir:
+    <input type="date" id="shopee-filter-7" onchange="tampilkanShopee('window7')">
+  </label>
   <div id="shopee-window-7"></div>
 </div>
 
 <div class="section">
   <h3>Rolling Window 3 Hari</h3>
-  <label>Pilih Tanggal Akhir: <input type="date" id="shopee-filter-3" onchange="tampilkanShopee('window3')"></label>
+  <label>Pilih Tanggal Akhir:
+    <input type="date" id="shopee-filter-3" onchange="tampilkanShopee('window3')">
+  </label>
   <div id="shopee-window-3"></div>
 </div>
 
@@ -75,128 +128,484 @@
 
 <div class="section">
   <h3>Backup & Restore Data</h3>
+
   <button onclick="salinBackupShopee()">📋 Salin Backup</button>
+
   <label>Data backup:</label>
   <textarea id="backup-output" rows="5"></textarea>
-  <label style="margin-top:15px;">Tempel data backup di sini:</label>
-  <textarea id="restore-input" rows="5" placeholder='{"2025-08-01":{"food":2,"paket":1,"cancel":1,"performa":"75.00"}}'></textarea>
+
+  <label style="margin-top:15px;">
+    Tempel data backup di sini:
+  </label>
+
+  <textarea id="restore-input" rows="5"
+placeholder='{"2025-08-01":{"food":2,"paket":1,"cancelFood":1,"cancelSPX":1,"performaFood":"80.00","performaSPX":"100.00","totalPerforma":"85.71"}}'></textarea>
+
   <button onclick="restoreBackupShopee()">🔄 Restore Backup</button>
 </div>
 
 <div class="section">
   <h3>Hapus Data</h3>
-  <button class="danger" onclick="hapusSemuaShopee()">🗑 Hapus Semua Data ShopeeFood</button>
+  <button class="danger" onclick="hapusSemuaShopee()">
+    🗑 Hapus Semua Data ShopeeFood
+  </button>
 </div>
 
 <script>
+
 const formatter = new Intl.NumberFormat('id-ID');
 
-function simpanData(key,date,data){let db=JSON.parse(localStorage.getItem(key))||{}; db[date]=data; localStorage.setItem(key,JSON.stringify(db));}
-function ambilData(key){return JSON.parse(localStorage.getItem(key))||{};}
-function hitungPerforma(selesai,cancel){const total=selesai+cancel; return total?((selesai/total)*100).toFixed(2):"0.00";}
+function simpanData(key,date,data){
+  let db = JSON.parse(localStorage.getItem(key)) || {};
+  db[date] = data;
+  localStorage.setItem(key, JSON.stringify(db));
+}
+
+function ambilData(key){
+  return JSON.parse(localStorage.getItem(key)) || {};
+}
+
+function hitungPerforma(selesai,cancel){
+  const total = selesai + cancel;
+  return total ? ((selesai / total) * 100).toFixed(2) : "0.00";
+}
+
+function hitungTotalPerforma(food,paket,cancelFood,cancelSPX){
+  const selesai = food + paket;
+  const cancel = cancelFood + cancelSPX;
+  return hitungPerforma(selesai,cancel);
+}
 
 function simpanShopee(){
-  const date=document.getElementById("shopee-date").value;
+
+  const date = document.getElementById("shopee-date").value;
+
   if(!date) return alert("Tanggal harus diisi!");
-  const food=+document.getElementById("shopee-food").value||0;
-  const paket=+document.getElementById("shopee-paket").value||0;
-  const cancel=+document.getElementById("shopee-cancel").value||0;
-  if([food,paket,cancel].some(n=>n<0)) return alert("Input tidak boleh negatif!");
-  const selesai=food+paket;
-  const performa=hitungPerforma(selesai,cancel);
-  simpanData("shopee",date,{food,paket,cancel,performa});
-  document.getElementById("shopee-result").innerText=`Performa: ${performa}% (tersimpan)`;
+
+  const food = +document.getElementById("shopee-food").value || 0;
+  const paket = +document.getElementById("shopee-paket").value || 0;
+  const cancelFood = +document.getElementById("shopee-cancel-food").value || 0;
+  const cancelSPX = +document.getElementById("shopee-cancel-spx").value || 0;
+
+  if([food,paket,cancelFood,cancelSPX].some(n=>n<0)){
+    return alert("Input tidak boleh negatif!");
+  }
+
+  const performaFood = hitungPerforma(food,cancelFood);
+  const performaSPX = hitungPerforma(paket,cancelSPX);
+  const totalPerforma = hitungTotalPerforma(
+    food,
+    paket,
+    cancelFood,
+    cancelSPX
+  );
+
+  simpanData("shopee",date,{
+    food,
+    paket,
+    cancelFood,
+    cancelSPX,
+    performaFood,
+    performaSPX,
+    totalPerforma
+  });
+
+  document.getElementById("shopee-result").innerText =
+  `Performa Food: ${performaFood}% | Performa SPX: ${performaSPX}% | Total: ${totalPerforma}%`;
+
   ["harian","window7","window3","bulanan"].forEach(f=>tampilkanShopee(f));
+
   tampilkanShopee();
 }
 
 function tampilkanShopee(filter=null){
-  const data=ambilData("shopee");
-  const harianDiv=document.getElementById("shopee-harian");
-  const bulananDiv=document.getElementById("shopee-bulanan");
-  const semuaDiv=document.getElementById("shopee-semua");
-  const window7Div=document.getElementById("shopee-window-7");
-  const window3Div=document.getElementById("shopee-window-3");
+
+  const data = ambilData("shopee");
+
+  const harianDiv = document.getElementById("shopee-harian");
+  const bulananDiv = document.getElementById("shopee-bulanan");
+  const semuaDiv = document.getElementById("shopee-semua");
+  const window7Div = document.getElementById("shopee-window-7");
+  const window3Div = document.getElementById("shopee-window-3");
+
+  // ================= HARIAN =================
 
   if(filter==="harian"){
-    const tgl=document.getElementById("shopee-filter-harian").value;
-    if(!tgl||!data[tgl]) return harianDiv.innerHTML=`<p>Data untuk tanggal <strong>${tgl}</strong> tidak ditemukan.</p>`;
-    const d=data[tgl];
-    harianDiv.innerHTML=`
+
+    const tgl = document.getElementById("shopee-filter-harian").value;
+
+    if(!tgl || !data[tgl]){
+      return harianDiv.innerHTML =
+      `<p>Data untuk tanggal <strong>${tgl}</strong> tidak ditemukan.</p>`;
+    }
+
+    const d = data[tgl];
+
+    harianDiv.innerHTML = `
       <table>
-        <tr><th colspan="2">${tgl}</th></tr>
-        <tr><td>Food</td><td>${formatter.format(d.food)}</td></tr>
-        <tr><td>Paket</td><td>${formatter.format(d.paket)}</td></tr>
-        <tr><td>Dibatalkan</td><td>${formatter.format(d.cancel)}</td></tr>
-        <tr><td>Performa</td><td style="color:${d.performa<80?'red':'green'}">${d.performa}%</td></tr>
-      </table>`;
+        <tr>
+          <th colspan="2">${tgl}</th>
+        </tr>
+
+        <tr>
+          <td>Food</td>
+          <td>${formatter.format(d.food)}</td>
+        </tr>
+
+        <tr>
+          <td>SPX</td>
+          <td>${formatter.format(d.paket)}</td>
+        </tr>
+
+        <tr>
+          <td>Dibatalkan Food</td>
+          <td>${formatter.format(d.cancelFood || 0)}</td>
+        </tr>
+
+        <tr>
+          <td>Dibatalkan SPX</td>
+          <td>${formatter.format(d.cancelSPX || 0)}</td>
+        </tr>
+
+        <tr>
+          <td>Performa Food</td>
+          <td style="color:${d.performaFood<80?'red':'green'}">
+            ${d.performaFood}%
+          </td>
+        </tr>
+
+        <tr>
+          <td>Performa SPX</td>
+          <td style="color:${d.performaSPX<80?'red':'green'}">
+            ${d.performaSPX}%
+          </td>
+        </tr>
+
+        <tr>
+          <td>Total Performa</td>
+          <td style="color:${d.totalPerforma<80?'red':'green'}">
+            ${d.totalPerforma}%
+          </td>
+        </tr>
+
+      </table>
+    `;
   }
+
+  // ================= WINDOW =================
 
   ["window7","window3"].forEach(w=>{
-    const inputDate=document.getElementById(`shopee-filter-${w==='window7'?7:3}`).value;
-    const div=w==='window7'?window7Div:window3Div;
-    if(!inputDate){div.innerHTML="<p>Silakan pilih tanggal akhir.</p>"; return;}
-    const end=new Date(inputDate);
-    const start=new Date(end); start.setDate(end.getDate()-(w==='window7'?6:2));
-    let total={food:0,paket:0,cancel:0};
-    for(const tgl in data){
-      const d=new Date(tgl);
-      if(d>=start&&d<=end){const val=data[tgl]; total.food+=val.food; total.paket+=val.paket; total.cancel+=val.cancel;}
+
+    const inputDate = document.getElementById(
+      `shopee-filter-${w==='window7'?7:3}`
+    ).value;
+
+    const div = w==='window7'
+      ? window7Div
+      : window3Div;
+
+    if(!inputDate){
+      div.innerHTML = "<p>Silakan pilih tanggal akhir.</p>";
+      return;
     }
-    const selesai=total.food+total.paket;
-    const performa=hitungPerforma(selesai,total.cancel);
-    div.innerHTML=`
-      <p>Periode: ${start.toISOString().slice(0,10)} – ${end.toISOString().slice(0,10)}</p>
+
+    const end = new Date(inputDate);
+
+    const start = new Date(end);
+
+    start.setDate(end.getDate() - (w==='window7'?6:2));
+
+    let total = {
+      food:0,
+      paket:0,
+      cancelFood:0,
+      cancelSPX:0
+    };
+
+    for(const tgl in data){
+
+      const d = new Date(tgl);
+
+      if(d >= start && d <= end){
+
+        const val = data[tgl];
+
+        total.food += val.food;
+        total.paket += val.paket;
+        total.cancelFood += (val.cancelFood || 0);
+        total.cancelSPX += (val.cancelSPX || 0);
+      }
+    }
+
+    const performaFood = hitungPerforma(
+      total.food,
+      total.cancelFood
+    );
+
+    const performaSPX = hitungPerforma(
+      total.paket,
+      total.cancelSPX
+    );
+
+    const totalPerforma = hitungTotalPerforma(
+      total.food,
+      total.paket,
+      total.cancelFood,
+      total.cancelSPX
+    );
+
+    div.innerHTML = `
+      <p>
+        Periode:
+        ${start.toISOString().slice(0,10)}
+        –
+        ${end.toISOString().slice(0,10)}
+      </p>
+
       <table>
-        <tr><th>Food</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+
         <tr>
-          <td>${formatter.format(total.food)}</td>
-          <td>${formatter.format(total.paket)}</td>
-          <td>${formatter.format(total.cancel)}</td>
-          <td style="color:${performa<80?'red':'green'}">${performa}%</td>
+          <th>Food</th>
+          <th>SPX</th>
+          <th>Dibatalkan Food</th>
+          <th>Dibatalkan SPX</th>
+          <th>Performa Food</th>
+          <th>Performa SPX</th>
+          <th>Total Performa</th>
         </tr>
-      </table>`;
+
+        <tr>
+
+          <td>${formatter.format(total.food)}</td>
+
+          <td>${formatter.format(total.paket)}</td>
+
+          <td>${formatter.format(total.cancelFood)}</td>
+
+          <td>${formatter.format(total.cancelSPX)}</td>
+
+          <td style="color:${performaFood<80?'red':'green'}">
+            ${performaFood}%
+          </td>
+
+          <td style="color:${performaSPX<80?'red':'green'}">
+            ${performaSPX}%
+          </td>
+
+          <td style="color:${totalPerforma<80?'red':'green'}">
+            ${totalPerforma}%
+          </td>
+
+        </tr>
+
+      </table>
+    `;
   });
 
+  // ================= BULANAN =================
+
   if(filter==="bulanan"){
-    const bulan=document.getElementById("shopee-filter-bulan").value;
-    let total={food:0,paket:0,cancel:0};
-    for(const tgl in data){if(tgl.startsWith(bulan)){const d=data[tgl]; total.food+=d.food; total.paket+=d.paket; total.cancel+=d.cancel;}}
-    const selesai=total.food+total.paket;
-    const performa=hitungPerforma(selesai,total.cancel);
-    bulananDiv.innerHTML=`
+
+    const bulan = document.getElementById("shopee-filter-bulan").value;
+
+    let total = {
+      food:0,
+      paket:0,
+      cancelFood:0,
+      cancelSPX:0
+    };
+
+    for(const tgl in data){
+
+      if(tgl.startsWith(bulan)){
+
+        const d = data[tgl];
+
+        total.food += d.food;
+        total.paket += d.paket;
+        total.cancelFood += (d.cancelFood || 0);
+        total.cancelSPX += (d.cancelSPX || 0);
+      }
+    }
+
+    const performaFood = hitungPerforma(
+      total.food,
+      total.cancelFood
+    );
+
+    const performaSPX = hitungPerforma(
+      total.paket,
+      total.cancelSPX
+    );
+
+    const totalPerforma = hitungTotalPerforma(
+      total.food,
+      total.paket,
+      total.cancelFood,
+      total.cancelSPX
+    );
+
+    bulananDiv.innerHTML = `
       <table>
-        <tr><th>Food</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+
         <tr>
-          <td>${formatter.format(total.food)}</td>
-          <td>${formatter.format(total.paket)}</td>
-          <td>${formatter.format(total.cancel)}</td>
-          <td style="color:${performa<80?'red':'green'}">${performa}%</td>
+          <th>Food</th>
+          <th>SPX</th>
+          <th>Dibatalkan Food</th>
+          <th>Dibatalkan SPX</th>
+          <th>Performa Food</th>
+          <th>Performa SPX</th>
+          <th>Total Performa</th>
         </tr>
-      </table>`;
+
+        <tr>
+
+          <td>${formatter.format(total.food)}</td>
+
+          <td>${formatter.format(total.paket)}</td>
+
+          <td>${formatter.format(total.cancelFood)}</td>
+
+          <td>${formatter.format(total.cancelSPX)}</td>
+
+          <td style="color:${performaFood<80?'red':'green'}">
+            ${performaFood}%
+          </td>
+
+          <td style="color:${performaSPX<80?'red':'green'}">
+            ${performaSPX}%
+          </td>
+
+          <td style="color:${totalPerforma<80?'red':'green'}">
+            ${totalPerforma}%
+          </td>
+
+        </tr>
+
+      </table>
+    `;
   }
 
-  let totalAll={food:0,paket:0,cancel:0};
-  for(const tgl in data){const d=data[tgl]; totalAll.food+=d.food; totalAll.paket+=d.paket; totalAll.cancel+=d.cancel;}
-  const selesaiAll=totalAll.food+totalAll.paket;
-  const performaAll=hitungPerforma(selesaiAll,totalAll.cancel);
-  semuaDiv.innerHTML=`
+  // ================= SEMUA =================
+
+  let totalAll = {
+    food:0,
+    paket:0,
+    cancelFood:0,
+    cancelSPX:0
+  };
+
+  for(const tgl in data){
+
+    const d = data[tgl];
+
+    totalAll.food += d.food;
+    totalAll.paket += d.paket;
+    totalAll.cancelFood += (d.cancelFood || 0);
+    totalAll.cancelSPX += (d.cancelSPX || 0);
+  }
+
+  const performaFood = hitungPerforma(
+    totalAll.food,
+    totalAll.cancelFood
+  );
+
+  const performaSPX = hitungPerforma(
+    totalAll.paket,
+    totalAll.cancelSPX
+  );
+
+  const totalPerforma = hitungTotalPerforma(
+    totalAll.food,
+    totalAll.paket,
+    totalAll.cancelFood,
+    totalAll.cancelSPX
+  );
+
+  semuaDiv.innerHTML = `
     <table>
-      <tr><th>Food</th><th>Paket</th><th>Dibatalkan</th><th>Performa</th></tr>
+
       <tr>
-        <td>${formatter.format(totalAll.food)}</td>
-        <td>${formatter.format(totalAll.paket)}</td>
-        <td>${formatter.format(totalAll.cancel)}</td>
-        <td style="color:${performaAll<80?'red':'green'}">${performaAll}%</td>
+        <th>Food</th>
+        <th>SPX</th>
+        <th>Dibatalkan Food</th>
+        <th>Dibatalkan SPX</th>
+        <th>Performa Food</th>
+        <th>Performa SPX</th>
+        <th>Total Performa</th>
       </tr>
-    </table>`;
+
+      <tr>
+
+        <td>${formatter.format(totalAll.food)}</td>
+
+        <td>${formatter.format(totalAll.paket)}</td>
+
+        <td>${formatter.format(totalAll.cancelFood)}</td>
+
+        <td>${formatter.format(totalAll.cancelSPX)}</td>
+
+        <td style="color:${performaFood<80?'red':'green'}">
+          ${performaFood}%
+        </td>
+
+        <td style="color:${performaSPX<80?'red':'green'}">
+          ${performaSPX}%
+        </td>
+
+        <td style="color:${totalPerforma<80?'red':'green'}">
+          ${totalPerforma}%
+        </td>
+
+      </tr>
+
+    </table>
+  `;
 }
 
-function hapusSemuaShopee(){if(confirm("Yakin ingin menghapus semua data ShopeeFood?")){localStorage.removeItem("shopee"); tampilkanShopee();}}
-function salinBackupShopee(){const data=localStorage.getItem("shopee")||"{}"; navigator.clipboard.writeText(data).then(()=>alert("Backup berhasil disalin ke clipboard.")); document.getElementById("backup-output").value=data;}
-function restoreBackupShopee(){const data=document.getElementById("restore-input").value; try{localStorage.setItem("shopee",JSON.stringify(JSON.parse(data))); alert("Data berhasil direstore!"); tampilkanShopee();}catch{alert("Format data tidak valid!");}}
+function hapusSemuaShopee(){
+
+  if(confirm("Yakin ingin menghapus semua data ShopeeFood?")){
+
+    localStorage.removeItem("shopee");
+
+    tampilkanShopee();
+  }
+}
+
+function salinBackupShopee(){
+
+  const data = localStorage.getItem("shopee") || "{}";
+
+  navigator.clipboard.writeText(data)
+  .then(()=>alert("Backup berhasil disalin ke clipboard."));
+
+  document.getElementById("backup-output").value = data;
+}
+
+function restoreBackupShopee(){
+
+  const data = document.getElementById("restore-input").value;
+
+  try{
+
+    localStorage.setItem(
+      "shopee",
+      JSON.stringify(JSON.parse(data))
+    );
+
+    alert("Data berhasil direstore!");
+
+    tampilkanShopee();
+
+  }catch{
+
+    alert("Format data tidak valid!");
+  }
+}
 
 tampilkanShopee();
+
 </script>
 
 </body>
