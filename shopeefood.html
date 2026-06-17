@@ -362,43 +362,48 @@ function tampilkanShopee(filter=null){
         ${end.toISOString().slice(0,10)}
       </p>
 
-      <table>
+<table>
+  <tr>
+    <td>Food</td>
+    <td>${formatter.format(total.food)}</td>
+  </tr>
 
-        <tr>
-          <th>Food</th>
-          <th>SPX</th>
-          <th>Dibatalkan Food</th>
-          <th>Dibatalkan SPX</th>
-          <th>Performa Food</th>
-          <th>Performa SPX</th>
-          <th>Total Performa</th>
-        </tr>
+  <tr>
+    <td>SPX</td>
+    <td>${formatter.format(total.paket)}</td>
+  </tr>
 
-        <tr>
+  <tr>
+    <td>Dibatalkan Food</td>
+    <td>${formatter.format(total.cancelFood)}</td>
+  </tr>
 
-          <td>${formatter.format(total.food)}</td>
+  <tr>
+    <td>Dibatalkan SPX</td>
+    <td>${formatter.format(total.cancelSPX)}</td>
+  </tr>
 
-          <td>${formatter.format(total.paket)}</td>
+  <tr>
+    <td>Performa Food</td>
+    <td style="color:${performaFood<80?'red':'green'}">
+      ${performaFood}%
+    </td>
+  </tr>
 
-          <td>${formatter.format(total.cancelFood)}</td>
+  <tr>
+    <td>Performa SPX</td>
+    <td style="color:${performaSPX<80?'red':'green'}">
+      ${performaSPX}%
+    </td>
+  </tr>
 
-          <td>${formatter.format(total.cancelSPX)}</td>
-
-          <td style="color:${performaFood<80?'red':'green'}">
-            ${performaFood}%
-          </td>
-
-          <td style="color:${performaSPX<80?'red':'green'}">
-            ${performaSPX}%
-          </td>
-
-          <td style="color:${totalPerforma<80?'red':'green'}">
-            ${totalPerforma}%
-          </td>
-
-        </tr>
-
-      </table>
+  <tr>
+    <td>Total Performa</td>
+    <td style="color:${totalPerforma<80?'red':'green'}">
+      ${totalPerforma}%
+    </td>
+  </tr>
+</table>
     `;
   });
 
@@ -446,43 +451,48 @@ function tampilkanShopee(filter=null){
     );
 
     bulananDiv.innerHTML = `
-      <table>
+<table>
+  <tr>
+    <td>Food</td>
+    <td>${formatter.format(total.food)}</td>
+  </tr>
 
-        <tr>
-          <th>Food</th>
-          <th>SPX</th>
-          <th>Dibatalkan Food</th>
-          <th>Dibatalkan SPX</th>
-          <th>Performa Food</th>
-          <th>Performa SPX</th>
-          <th>Total Performa</th>
-        </tr>
+  <tr>
+    <td>SPX</td>
+    <td>${formatter.format(total.paket)}</td>
+  </tr>
 
-        <tr>
+  <tr>
+    <td>Dibatalkan Food</td>
+    <td>${formatter.format(total.cancelFood)}</td>
+  </tr>
 
-          <td>${formatter.format(total.food)}</td>
+  <tr>
+    <td>Dibatalkan SPX</td>
+    <td>${formatter.format(total.cancelSPX)}</td>
+  </tr>
 
-          <td>${formatter.format(total.paket)}</td>
+  <tr>
+    <td>Performa Food</td>
+    <td style="color:${performaFood<80?'red':'green'}">
+      ${performaFood}%
+    </td>
+  </tr>
 
-          <td>${formatter.format(total.cancelFood)}</td>
+  <tr>
+    <td>Performa SPX</td>
+    <td style="color:${performaSPX<80?'red':'green'}">
+      ${performaSPX}%
+    </td>
+  </tr>
 
-          <td>${formatter.format(total.cancelSPX)}</td>
-
-          <td style="color:${performaFood<80?'red':'green'}">
-            ${performaFood}%
-          </td>
-
-          <td style="color:${performaSPX<80?'red':'green'}">
-            ${performaSPX}%
-          </td>
-
-          <td style="color:${totalPerforma<80?'red':'green'}">
-            ${totalPerforma}%
-          </td>
-
-        </tr>
-
-      </table>
+  <tr>
+    <td>Total Performa</td>
+    <td style="color:${totalPerforma<80?'red':'green'}">
+      ${totalPerforma}%
+    </td>
+  </tr>
+</table>
     `;
   }
 
@@ -523,43 +533,48 @@ function tampilkanShopee(filter=null){
   );
 
   semuaDiv.innerHTML = `
-    <table>
+<table>
+  <tr>
+    <td>Food</td>
+    <td>${formatter.format(total.food)}</td>
+  </tr>
 
-      <tr>
-        <th>Food</th>
-        <th>SPX</th>
-        <th>Dibatalkan Food</th>
-        <th>Dibatalkan SPX</th>
-        <th>Performa Food</th>
-        <th>Performa SPX</th>
-        <th>Total Performa</th>
-      </tr>
+  <tr>
+    <td>SPX</td>
+    <td>${formatter.format(total.paket)}</td>
+  </tr>
 
-      <tr>
+  <tr>
+    <td>Dibatalkan Food</td>
+    <td>${formatter.format(total.cancelFood)}</td>
+  </tr>
 
-        <td>${formatter.format(totalAll.food)}</td>
+  <tr>
+    <td>Dibatalkan SPX</td>
+    <td>${formatter.format(total.cancelSPX)}</td>
+  </tr>
 
-        <td>${formatter.format(totalAll.paket)}</td>
+  <tr>
+    <td>Performa Food</td>
+    <td style="color:${performaFood<80?'red':'green'}">
+      ${performaFood}%
+    </td>
+  </tr>
 
-        <td>${formatter.format(totalAll.cancelFood)}</td>
+  <tr>
+    <td>Performa SPX</td>
+    <td style="color:${performaSPX<80?'red':'green'}">
+      ${performaSPX}%
+    </td>
+  </tr>
 
-        <td>${formatter.format(totalAll.cancelSPX)}</td>
-
-        <td style="color:${performaFood<80?'red':'green'}">
-          ${performaFood}%
-        </td>
-
-        <td style="color:${performaSPX<80?'red':'green'}">
-          ${performaSPX}%
-        </td>
-
-        <td style="color:${totalPerforma<80?'red':'green'}">
-          ${totalPerforma}%
-        </td>
-
-      </tr>
-
-    </table>
+  <tr>
+    <td>Total Performa</td>
+    <td style="color:${totalPerforma<80?'red':'green'}">
+      ${totalPerforma}%
+    </td>
+  </tr>
+</table>
   `;
 }
 
